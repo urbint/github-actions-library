@@ -19,16 +19,14 @@ runs:
 
     - name: Set up Google Cloud SDK
       shell: bash
-      env: 
-       SA_KEY: ${{ secrets.GCR_SA_KEY }}
       run: |
-        echo "$SA_KEY" > ${{ github.workspace }}/gcr_sa_key.json
+        echo "${{ inputs.GCR_SA_KEY }}" > "${{ github.workspace }}/gcr_sa_key.json"
         echo "Setting up Google Cloud SDK..."
         curl -sSL https://sdk.cloud.google.com | bash
-        source $HOME/google-cloud-sdk/path.bash.inc
-        gcloud auth activate-service-account --key-file=${{ github.workspace }}/gcr_sa_key.json
+        source "$HOME/google-cloud-sdk/path.bash.inc"
+        gcloud auth activate-service-account --key-file="${{ github.workspace }}/gcr_sa_key.json"
         gcloud auth configure-docker gcr.io --quiet
-
+        
     - name: Build Docker Image
       shell: bash
       run: |
