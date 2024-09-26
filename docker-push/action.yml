@@ -1,4 +1,4 @@
-name: 'Docker Push to GCR'
+name: 'Docker Push'
 description: 'Builds and pushes a Docker image to Google Container Registry'
 inputs:
   image_name:
@@ -21,8 +21,8 @@ runs:
       id: auth
       uses: google-github-actions/auth@v1
       with:
-        token_format: "access_token"
         credentials_json: ${{ inputs.gcr_sa_key }}
+        token_format: "access_token"  # Specify the token format
 
     - name: Log into Google Container Registry
       uses: docker/login-action@v2
@@ -32,11 +32,13 @@ runs:
         password: ${{ steps.auth.outputs.access_token }}
 
     - name: Build Docker Image
+      shell: bash  # Specify the shell
       run: |
         echo "Building Docker image..."
         docker build -t "${{ inputs.image_name }}:${{ inputs.tag }}" .
 
     - name: Push Docker Image
+      shell: bash  # Specify the shell
       run: |
         echo "Pushing Docker image to GCR..."
         docker tag "${{ inputs.image_name }}:${{ inputs.tag }}" "gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}"
