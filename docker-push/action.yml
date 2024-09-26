@@ -21,6 +21,7 @@ runs:
       id: auth
       uses: google-github-actions/auth@v1
       with:
+        token_format: "access_token"
         credentials_json: ${{ inputs.gcr_sa_key }}
 
     - name: Log into Google Container Registry
@@ -31,13 +32,11 @@ runs:
         password: ${{ steps.auth.outputs.access_token }}
 
     - name: Build Docker Image
-      shell: bash
       run: |
         echo "Building Docker image..."
         docker build -t "${{ inputs.image_name }}:${{ inputs.tag }}" .
 
     - name: Push Docker Image
-      shell: bash
       run: |
         echo "Pushing Docker image to GCR..."
         docker tag "${{ inputs.image_name }}:${{ inputs.tag }}" "gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}"
