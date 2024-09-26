@@ -17,26 +17,28 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Google Cloud SDK
-      shell: bash
-      run: |
-        echo "${{ inputs.gcr_sa_key }}" > "${{ github.workspace }}/gcr_sa_key.json"
-        cat "${{ github.workspace }}/gcr_sa_key.json"
-        echo "Setting up Google Cloud SDK..."
-        curl -sSL https://sdk.cloud.google.com | bash
-        source "$HOME/google-cloud-sdk/path.bash.inc"
-        gcloud auth activate-service-account --key-file="${{ github.workspace }}/gcr_sa_key.json"
-        gcloud auth configure-docker gcr.io --quiet
-        
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v1
+      with:
+        credentials_json: ${{ inputs.gcr_sa_key }}
+
+    - name: Log into Google Container Registry
+      uses: docker/login-action@v2
+      with:
+        registry: gcr.io
+        username: oauth2accesstoken
+        password: ${{ steps.auth.outputs.access_token }}
+
     - name: Build Docker Image
       shell: bash
       run: |
         echo "Building Docker image..."
-        docker build -t my-image:${{ inputs.tag }} .
+        docker build -t "${{ inputs.image_name }}:${{ inputs.tag }}" .
 
     - name: Push Docker Image
       shell: bash
       run: |
         echo "Pushing Docker image to GCR..."
-        docker tag my-image:${{ inputs.tag }} gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}
-        docker push gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}
+        docker tag "${{ inputs.image_name }}:${{ inputs.tag }}" "gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}"
+        docker push "gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}"
