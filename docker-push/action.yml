@@ -31,10 +31,16 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
 
+    - name: Debug Inputs
+      shell: bash  # Specify the shell to use
+      run: |
+        echo "Image Name: ${{ inputs.image_name }}"
+        echo "Tag: ${{ inputs.tag }}"
+
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with: 
         context: .
         file: Dockerfile
         push: true
-        tags: gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}  # Tagging during push
+        tags: gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}
