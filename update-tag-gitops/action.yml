@@ -25,6 +25,13 @@ runs:
         path: gitops
         ref: testbranch2
 
+    - name: Fetch and Rebase with Remote
+      run: |
+        cd gitops
+        git fetch origin
+        git rebase origin/testbranch2 || git rebase --abort
+      shell: bash
+
     - name: Update image tag
       run: |
         TAG=${{ inputs.tag }}
@@ -34,7 +41,7 @@ runs:
       shell: bash
 
     - name: Commit and Push Changes
-      uses: ad-m/github-push-action@v0.6.0 
+      uses: ad-m/github-push-action@v0.6.0
       with:
         github_token: ${{ inputs.token }}
         branch: testbranch2
