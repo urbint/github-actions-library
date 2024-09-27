@@ -23,7 +23,7 @@ runs:
       uses: google-github-actions/auth@v1
       with:
         credentials_json: ${{ inputs.gcr_sa_key }}
-        token_format: "access_token"  # Specify token format
+        token_format: "access_token"  
 
     - name: Log into Google Container Registry
       uses: docker/login-action@v2
@@ -37,6 +37,6 @@ runs:
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ${{ inputs.dockerfile }}  # Path to the Dockerfile
+        file: ${{ inputs.dockerfile }}  
         push: true
-        tags: gcr.io/urbint-1259/my-local-image:${{ inputs.tag }}  # Hardcoded image name with tag
+        tags: gcr.io/urbint-1259/my-local-image:${{ inputs.tag }} 

@@ -34,7 +34,7 @@ runs:
       shell: bash
 
     - name: Commit and Push Changes
-      uses: ad-m/github-push-action@v0.6.0  # Use the push action
+      uses: ad-m/github-push-action@v0.6.0 
       with:
         github_token: ${{ inputs.token }}
         branch: testbranch2
