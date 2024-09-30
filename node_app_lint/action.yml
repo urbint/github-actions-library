@@ -6,7 +6,7 @@ inputs:
   node-version:
     description: 'Node.js version to use'
     required: true
-    default: '16'
+    default: '18'
 
 runs:
   using: 'composite'
