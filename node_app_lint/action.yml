@@ -1,44 +1,26 @@
 name: 'Run Lint and Test'
 description: 'A GitHub Action to run lint and tests with custom configuration'
 author: 'Prakhar'
-
 inputs:
   node-version:
     description: 'Node.js version to use'
-    required: false
+    required: true
     default: '20'
-
 runs:
   using: 'composite'
   steps:
     - name: Checkout code
       uses: actions/checkout@v2
-
-    - name: Cache node modules
-      uses: actions/cache@v2
-      with:
-        path: ~/.cache/yarn
-        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-yarn-
-
     - name: Set up Node.js
       uses: actions/setup-node@v2
       with:
         node-version: ${{ inputs.node-version }}
-
-    - name: Clear Yarn cache
-      run: yarn cache clean
-      shell: bash
-
     - name: Install dependencies
       run: yarn install
       shell: bash
-
     - name: Run lint
-      run: yarn lint --fix || true # Remove `|| true` if you want to fail on lint errors
+      run: yarn lint
       shell: bash
-
     - name: Run tests
       run: yarn test
       shell: bash
