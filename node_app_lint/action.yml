@@ -10,13 +10,13 @@ runs:
   using: 'composite'
   steps:
     - name: Set up Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: ${{ inputs.node-version }}  # Use the input value
-        registry-url: "https://npm.pkg.github.com"  # Optional
+        node-version: ${{ inputs.node-version }}  
+        registry-url: "https://npm.pkg.github.com"  
 
     - name: Verify Node.js version
-      run: node -v  # Verify that the correct Node.js version is set
+      run: node -v  
       shell: bash
 
     - name: Install dependencies
