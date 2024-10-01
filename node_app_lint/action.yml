@@ -4,13 +4,13 @@ author: 'Prakhar'
 inputs:
   node-version:
     description: 'Node.js version to use'
-    required: false
-    default: '16'
+    required: true
+    
 runs:
   using: 'composite'
   steps:
     - name: Run lint
-      run: yarn lint --fix || true # Remove `|| true` if you want to fail on lint errors
+      run: yarn lint --fix || true 
       shell: bash
 
     - name: Run tests
