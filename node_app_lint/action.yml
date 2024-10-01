@@ -5,10 +5,24 @@ inputs:
   node-version:
     description: 'Node.js version to use'
     required: true
-    
+
 runs:
   using: 'composite'
   steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}  # Use the input value
+        registry-url: "https://npm.pkg.github.com"  # Optional
+
+    - name: Verify Node.js version
+      run: node -v  # Verify that the correct Node.js version is set
+      shell: bash
+
+    - name: Install dependencies
+      run: yarn install
+      shell: bash
+
     - name: Run lint
       run: yarn lint --fix || true 
       shell: bash
