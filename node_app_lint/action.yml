@@ -5,8 +5,8 @@ author: 'Prakhar'
 inputs:
   node-version:
     description: 'Node.js version to use'
-    required: true
-    default: '18'
+    required: false
+    default: '20'
 
 runs:
   using: 'composite'
