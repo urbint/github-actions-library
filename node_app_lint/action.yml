@@ -23,7 +23,7 @@ runs:
       run: |
         yarn test
       shell: bash
-      continue-on-error: true  # Allow the job to continue even if this step fails
+      
 
 inputs:
   node-version:
