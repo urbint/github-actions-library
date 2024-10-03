@@ -1,32 +1,31 @@
-name: 'Run Lint and Test'
-description: 'A GitHub Action to run lint and tests with custom configuration'
-author: 'Prakhar'
-inputs:
-  node-version:
-    description: 'Node.js version to use'
-    required: true
-
+name: 'Node.js Lint and Test'
+description: 'A composite action to lint and test a Node.js app'
+author: 'Urbint'
 runs:
   using: 'composite'
   steps:
     - name: Set up Node.js
       uses: actions/setup-node@v3
       with:
-        node-version: ${{ inputs.node-version }}  
-        registry-url: "https://npm.pkg.github.com"  
-
-    - name: Verify Node.js version
-      run: node -v  
-      shell: bash
+        node-version: ${{ inputs.node-version }}
 
     - name: Install dependencies
-      run: yarn install
+      run: |
+        yarn install
       shell: bash
 
-    - name: Run lint
-      run: yarn lint --fix || true 
+    - name: Run Lint
+      run: |
+        yarn lint
       shell: bash
 
-    - name: Run tests
-      run: yarn test
+    - name: Run Test
+      run: |
+        yarn test
       shell: bash
+
+inputs:
+  node-version:
+    description: 'Node.js version to use'
+    required: true
+    default: '16'
