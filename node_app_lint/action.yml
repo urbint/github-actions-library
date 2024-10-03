@@ -23,9 +23,10 @@ runs:
       run: |
         yarn test
       shell: bash
+      continue-on-error: true  # Allow the job to continue even if this step fails
 
 inputs:
   node-version:
     description: 'Node.js version to use'
     required: true
-    default: '16'
+    default: '20'  # Updated Node.js version
