@@ -43,6 +43,11 @@ runs:
         NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}  # Use the provided auth token
       shell: bash  # Specify the shell for this step
 
+    - name: Build the application
+      run: |
+        yarn build  # Add the build step
+      shell: bash  # Specify the shell for this step
+
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
 
