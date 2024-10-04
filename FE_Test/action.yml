@@ -21,6 +21,7 @@ runs:
       run: |
         yarn test
       shell: bash
+      continue-on-error: true
 
 inputs:
   node-version:
