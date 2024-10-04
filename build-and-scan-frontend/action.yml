@@ -1,0 +1,68 @@
+name: Build and Scan Docker Image
+
+description: Build a Docker image and scan it for vulnerabilities using Trivy.
+
+inputs:
+  image_name:
+    description: 'The name and tag of the Docker image (e.g., my-image:latest).'
+    required: true
+  dockerfile:
+    description: 'Path to the Dockerfile.'
+    required: true
+    default: 'Dockerfile'
+  context:
+    description: 'Build context path.'
+    required: true
+    default: '.'  # Default to current directory
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Docker image
+      id: build
+      shell: bash
+      run: |
+        docker build -t ${{ inputs.image_name }} -f ${{ inputs.dockerfile }} ${{ inputs.context }}
+
+    - name: List Docker Images
+      shell: bash
+      run: docker images
+
+    - name: Cache Trivy DB
+      id: cache-trivy-db
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/trivy
+        key: trivy-db-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          trivy-db-${{ runner.os }}-
+          trivy-db-
+
+    - name: Install Trivy
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install wget -y
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb
+        sudo dpkg -i trivy_0.45.1_Linux-64bit.deb
+
+    - name: Update Trivy DB
+      shell: bash
+      run: |
+        trivy db update || echo "Failed to update DB, using cached version."
+
+    - name: Trivy Scan
+      id: trivy
+      shell: bash
+      run: |
+        trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}
+      continue-on-error: true
+
+    - name: Fail if Trivy Scan Fails
+      if: ${{ steps.trivy.outcome != 'success' }}
+      shell: bash
+      run: |
+        echo "Trivy scan failed, cannot proceed."
+        exit 1
