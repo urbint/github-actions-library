@@ -32,7 +32,18 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
 
+    - name: Install dependencies
+      run: |
+        yarn install
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}  # Use the provided auth token
+      shell: bash  # Specify the shell for this step
 
+    - name: Build the application
+      run: |
+        yarn build  # Add the build step
+      shell: bash  # Specify the shell for this step
+      
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
