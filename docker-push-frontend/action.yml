@@ -14,10 +14,14 @@ inputs:
   node-version:
     description: 'Node.js version to use'
     required: true
-    default: '20'  # Default Node.js version
+    default: '20' 
   registry-url:
     description: 'Registry URL for NPM packages'
     required: true
+  node-auth-token:
+    description: 'NPM Auth Token for accessing private packages'
+    required: true
+    default: '' 
 
 runs:
   using: 'composite'
