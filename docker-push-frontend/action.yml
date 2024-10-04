@@ -11,6 +11,13 @@ inputs:
     description: 'Path to the Dockerfile (default: Dockerfile)'
     required: false
     default: 'Dockerfile'
+  node-version:
+    description: 'Node.js version to use'
+    required: true
+    default: '20'  # Default Node.js version
+  registry-url:
+    description: 'Registry URL for NPM packages'
+    required: true
 
 runs:
   using: 'composite'
@@ -32,18 +39,24 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
 
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+
     - name: Install dependencies
       run: |
         yarn install
       env:
-        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}  # Use the provided auth token
-      shell: bash  # Specify the shell for this step
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}  
+      shell: bash  
 
     - name: Build the application
       run: |
         yarn build  # Add the build step
-      shell: bash  # Specify the shell for this step
-      
+      shell: bash  
+
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
