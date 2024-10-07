@@ -33,6 +33,10 @@ inputs:
     description: 'Project name'
     required: false
     default: 'damage-prevention'
+  lint-script:
+    description: 'Path to the linting script to run'
+    required: true
+    default: './support/scripts/check-python-project'
   django_settings_module:
     description: 'Django settings module'
     required: false
@@ -58,28 +62,9 @@ runs:
         ./support/scripts/bootstrap.sh
       shell: bash
 
-    - name: Run Black
-      run: |
-        cd ${{ inputs.working-directory }}
-        poetry run black --check .
-      shell: bash
-
-    - name: Run Flake8
-      run: |
-        cd ${{ inputs.working-directory }}
-        poetry run flake8 .
-      shell: bash
-
-    - name: Run isort
-      run: |
-        cd ${{ inputs.working-directory }}
-        poetry run isort --check .
-      shell: bash
-
-    - name: Run mypy
-      run: |
-        cd ${{ inputs.working-directory }}
-        poetry run mypy .
+    - name: Run Lint
+      run: ${{ inputs.lint-script }}
+      working-directory: ${{ inputs.working-directory }}
       shell: bash
 
     - name: Set environment variables
