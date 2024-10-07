@@ -52,8 +52,7 @@ runs:
 
     - name: Install dependencies
       run: |
-        curl -sSL https://install.python-poetry.org | python3 - --version ${{ inputs.poetry-version }}
-        poetry install
+       poetry install
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
