@@ -7,7 +7,7 @@ inputs:
     default: '3.9'
   poetry-version:
     description: 'Version of Poetry to install'
-    required: false
+    required: true
     default: 'latest'
   working-directory:
     description: 'Directory to run the installation'
@@ -33,15 +33,10 @@ inputs:
     description: 'Project name'
     required: false
     default: 'damage-prevention'
-  lint-script:
-    description: 'Path to the linting script to run'
-    required: true
-    default: './support/scripts/check-python-project'
   django_settings_module:
     description: 'Django settings module'
     required: false
     default: 'core.settings'
-
 runs:
   using: "composite"
   steps:
@@ -49,30 +44,37 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: "poetry"
-
     - name: Install dependencies
       run: |
-        cd ${{ inputs.working-directory }}
         poetry install
-      shell: bash
-
-    - name: Run bootstrap script
-      run: |
-        cd ${{ inputs.working-directory }}
-        ./support/scripts/bootstrap.sh
-      shell: bash
-
-    - name: Run Lint
-      run: ${{ inputs.lint-script }}
       working-directory: ${{ inputs.working-directory }}
       shell: bash
-
+    - name: Run bootstrap script
+      run: ./support/scripts/bootstrap.sh
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+    - name: Run Black
+      run: poetry run black --check .
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+    - name: Run Flake8
+      run: poetry run flake8 .
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+    - name: Run isort
+      run: poetry run isort --check .
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+    - name: Run mypy
+      run: poetry run mypy .
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
     - name: Set environment variables
       run: |
         echo "DEBUG=${{ inputs.debug }}" >> $GITHUB_ENV
         echo "TEST=${{ inputs.test }}" >> $GITHUB_ENV
         echo "CI=${{ inputs.ci }}" >> $GITHUB_ENV
-        echo "ENABLE_GCS=False" >> $GITHUB_ENV
+        echo "ENABLE_GCS=${{ inputs.enable_gcs }}" >> $GITHUB_ENV
         echo "PROJECT=${{ inputs.project }}" >> $GITHUB_ENV
         echo "DJANGO_SETTINGS_MODULE=${{ inputs.django_settings_module }}" >> $GITHUB_ENV
       shell: bash
