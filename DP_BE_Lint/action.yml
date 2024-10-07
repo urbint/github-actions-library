@@ -87,7 +87,7 @@ runs:
         echo "DEBUG=${{ inputs.debug }}" >> $GITHUB_ENV
         echo "TEST=${{ inputs.test }}" >> $GITHUB_ENV
         echo "CI=${{ inputs.ci }}" >> $GITHUB_ENV
-        echo "ENABLE_GCS=${{ inputs.enable_gcs }}" >> $GITHUB_ENV
+        echo "ENABLE_GCS=False" >> $GITHUB_ENV
         echo "PROJECT=${{ inputs.project }}" >> $GITHUB_ENV
         echo "DJANGO_SETTINGS_MODULE=${{ inputs.django_settings_module }}" >> $GITHUB_ENV
       shell: bash
