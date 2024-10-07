@@ -46,6 +46,7 @@ runs:
         cache: "poetry"
     - name: Install dependencies
       run: |
+        cd ${{ inputs.working-directory }}
         poetry install
       working-directory: ${{ inputs.working-directory }}
       shell: bash
