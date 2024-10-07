@@ -7,7 +7,7 @@ inputs:
     default: '3.9'
   poetry-version:
     description: 'Version of Poetry to install'
-    required: true
+    required: false
     default: 'latest'
   working-directory:
     description: 'Directory to run the installation'
