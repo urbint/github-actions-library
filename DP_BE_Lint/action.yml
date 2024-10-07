@@ -13,10 +13,6 @@ inputs:
     description: 'Directory to run the installation'
     required: true
     default: 'damage-prevention'
-  lint-script:
-    description: 'Path to the linting script to run'
-    required: true
-    default: './support/scripts/check-python-project'
   debug:
     description: 'Debug environment variable'
     required: false
@@ -52,7 +48,7 @@ runs:
 
     - name: Install dependencies
       run: |
-       poetry install
+        poetry install
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
@@ -61,8 +57,23 @@ runs:
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
-    - name: Run Lint
-      run: ${{ inputs.lint-script }}
+    - name: Run Black
+      run: poetry run black --check .
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Run Flake8
+      run: poetry run flake8 .
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Run isort
+      run: poetry run isort --check .
+      working-directory: ${{ inputs.working-directory }}
+      shell: bash
+
+    - name: Run mypy
+      run: poetry run mypy .
       working-directory: ${{ inputs.working-directory }}
       shell: bash
 
@@ -74,4 +85,4 @@ runs:
         echo "ENABLE_GCS=${{ inputs.enable_gcs }}" >> $GITHUB_ENV
         echo "PROJECT=${{ inputs.project }}" >> $GITHUB_ENV
         echo "DJANGO_SETTINGS_MODULE=${{ inputs.django_settings_module }}" >> $GITHUB_ENV
-      shell: bash 
+      shell: bash
