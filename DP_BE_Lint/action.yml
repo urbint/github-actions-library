@@ -48,33 +48,38 @@ runs:
 
     - name: Install dependencies
       run: |
+        cd ${{ inputs.working-directory }}
         poetry install
-      working-directory: ${{ inputs.working-directory }}
       shell: bash
 
     - name: Run bootstrap script
-      run: ./support/scripts/bootstrap.sh
-      working-directory: ${{ inputs.working-directory }}
+      run: |
+        cd ${{ inputs.working-directory }}
+        ./support/scripts/bootstrap.sh
       shell: bash
 
     - name: Run Black
-      run: poetry run black --check .
-      working-directory: ${{ inputs.working-directory }}
+      run: |
+        cd ${{ inputs.working-directory }}
+        poetry run black --check .
       shell: bash
 
     - name: Run Flake8
-      run: poetry run flake8 .
-      working-directory: ${{ inputs.working-directory }}
+      run: |
+        cd ${{ inputs.working-directory }}
+        poetry run flake8 .
       shell: bash
 
     - name: Run isort
-      run: poetry run isort --check .
-      working-directory: ${{ inputs.working-directory }}
+      run: |
+        cd ${{ inputs.working-directory }}
+        poetry run isort --check .
       shell: bash
 
     - name: Run mypy
-      run: poetry run mypy .
-      working-directory: ${{ inputs.working-directory }}
+      run: |
+        cd ${{ inputs.working-directory }}
+        poetry run mypy .
       shell: bash
 
     - name: Set environment variables
