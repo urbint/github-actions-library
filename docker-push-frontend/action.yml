@@ -22,6 +22,7 @@ inputs:
     description: 'NPM Auth Token for accessing private packages'
     required: true
     default: '' 
+  
   image_name:
     description: 'Name of the Docker image (default: my-frontend-image)'
     required: false
