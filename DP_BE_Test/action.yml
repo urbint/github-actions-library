@@ -12,5 +12,4 @@ runs:
   steps:
     - name: Run Tests
       run: ${{ inputs.script }} ${{ inputs.tag }}
-      working-directory: "damage-prevention"
       shell: bash
