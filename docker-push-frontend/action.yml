@@ -23,9 +23,9 @@ inputs:
     required: true
     default: '' 
   image_name:
-    description: 'Name of the Docker image (default: my-image-2)'
+    description: 'Name of the Docker image (default: my-frontend-image)'
     required: false
-    default: 'my-image-2'
+    default: 'my-frontend-image'
 
 
 runs:
