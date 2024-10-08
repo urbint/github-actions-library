@@ -12,6 +12,11 @@ inputs:
     required: false
     default: 'Dockerfile'
 
+  image_name:
+    description: 'Name of the Docker image (default: my-local-image)'
+    required: false
+    default: 'my-local-image'
+
 runs:
   using: 'composite'
   steps:
