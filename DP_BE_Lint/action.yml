@@ -1,5 +1,5 @@
 name: "Install BE"
-description: "Install Poetry and Python and cache poetry dependencies, install GDAL lib, run bootstrap script"
+description: "Install Poetry and Python, cache poetry dependencies, run bootstrap script, and perform linting"
 inputs:
   python-version:
     description: 'Python version to install'
@@ -44,32 +44,46 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: "poetry"
+    
+    # Install Poetry
+    - name: Install Poetry
+      run: |
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
+      shell: bash
+    
     - name: Install dependencies
       run: |
         cd ${{ inputs.working-directory }}
         poetry install
       working-directory: ${{ inputs.working-directory }}
       shell: bash
+
     - name: Run bootstrap script
       run: ./support/scripts/bootstrap.sh
       working-directory: ${{ inputs.working-directory }}
       shell: bash
+
     - name: Run Black
       run: poetry run black --check .
       working-directory: ${{ inputs.working-directory }}
       shell: bash
+
     - name: Run Flake8
       run: poetry run flake8 .
       working-directory: ${{ inputs.working-directory }}
       shell: bash
+
     - name: Run isort
       run: poetry run isort --check .
       working-directory: ${{ inputs.working-directory }}
       shell: bash
+
     - name: Run mypy
       run: poetry run mypy .
       working-directory: ${{ inputs.working-directory }}
       shell: bash
+
     - name: Set environment variables
       run: |
         echo "DEBUG=${{ inputs.debug }}" >> $GITHUB_ENV
