@@ -13,3 +13,4 @@ runs:
     - name: Run Tests
       run: ${{ inputs.script }} ${{ inputs.tag }}
       shell: bash
+      working-directory: ./damage-prevention
