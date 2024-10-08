@@ -1,95 +1,12 @@
-name: "Install BE"
-description: "Install Poetry and Python, cache poetry dependencies, run bootstrap script, and perform linting"
+name: "Run Lint"
+description: "Runs linting on the codebase"
 inputs:
-  python-version:
-    description: 'Python version to install'
+  script:
+    description: "Script to run for linting"
     required: true
-    default: '3.9'
-  poetry-version:
-    description: 'Version of Poetry to install'
-    required: true
-    default: 'latest'
-  working-directory:
-    description: 'Directory to run the installation'
-    required: true
-    default: 'damage-prevention'
-  debug:
-    description: 'Debug environment variable'
-    required: false
-    default: 'False'
-  test:
-    description: 'Test environment variable'
-    required: false
-    default: 'True'
-  ci:
-    description: 'CI environment variable'
-    required: false
-    default: 'True'
-  enable_gcs:
-    description: 'Enable GCS environment variable'
-    required: false
-    default: 'False'
-  project:
-    description: 'Project name'
-    required: false
-    default: 'damage-prevention'
-  django_settings_module:
-    description: 'Django settings module'
-    required: false
-    default: 'core.settings'
 runs:
   using: "composite"
   steps:
-    - uses: actions/setup-python@v4
-      with:
-        python-version: ${{ inputs.python-version }}
-        cache: "poetry"
-    
-    # Install Poetry
-    - name: Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
-      shell: bash
-    
-    - name: Install dependencies
-      run: |
-        cd ${{ inputs.working-directory }}
-        poetry install
-      working-directory: ${{ inputs.working-directory }}
-      shell: bash
-
-    - name: Run bootstrap script
-      run: ./support/scripts/bootstrap.sh
-      working-directory: ${{ inputs.working-directory }}
-      shell: bash
-
-    - name: Run Black
-      run: poetry run black --check .
-      working-directory: ${{ inputs.working-directory }}
-      shell: bash
-
-    - name: Run Flake8
-      run: poetry run flake8 .
-      working-directory: ${{ inputs.working-directory }}
-      shell: bash
-
-    - name: Run isort
-      run: poetry run isort --check .
-      working-directory: ${{ inputs.working-directory }}
-      shell: bash
-
-    - name: Run mypy
-      run: poetry run mypy .
-      working-directory: ${{ inputs.working-directory }}
-      shell: bash
-
-    - name: Set environment variables
-      run: |
-        echo "DEBUG=${{ inputs.debug }}" >> $GITHUB_ENV
-        echo "TEST=${{ inputs.test }}" >> $GITHUB_ENV
-        echo "CI=${{ inputs.ci }}" >> $GITHUB_ENV
-        echo "ENABLE_GCS=${{ inputs.enable_gcs }}" >> $GITHUB_ENV
-        echo "PROJECT=${{ inputs.project }}" >> $GITHUB_ENV
-        echo "DJANGO_SETTINGS_MODULE=${{ inputs.django_settings_module }}" >> $GITHUB_ENV
+    - name: Run Lint
+      run: ${{ inputs.script }}
       shell: bash

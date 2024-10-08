@@ -1,0 +1,16 @@
+name: "Set Environment Variables"
+description: "Set up environment variables for the workflow"
+runs:
+  using: "composite"
+  steps:
+    - name: Set Environment
+      run: |
+        echo "POSTGRES_HOST=postgres" >> $GITHUB_ENV
+        echo "POSTGRES_PORT=5432" >> $GITHUB_ENV
+        echo "REDIS_HOST=redis" >> $GITHUB_ENV
+        echo "REDIS_PORT=6379" >> $GITHUB_ENV
+        echo "DEBUG=False" >> $GITHUB_ENV
+        echo "TEST=True" >> $GITHUB_ENV
+        echo "CI=True" >> $GITHUB_ENV
+        echo "ENABLE_GCS=False" >> $GITHUB_ENV
+      shell: bash

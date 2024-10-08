@@ -1,0 +1,29 @@
+name: "Generate Coverage"
+description: "Generates coverage reports"
+runs:
+  using: "composite"
+  steps:
+    - name: Generate Coverage Files
+      run: |
+        poetry run coverage xml --omit="`poetry env info -p`*,*__init__.py,**/test_*.py"
+        poetry run coverage html --omit="`poetry env info -p`*,*__init__.py,**/test_*.py"
+      shell: bash
+    - name: Find and Replace coverage path Source to valid one
+      run: sed -i 's|/__w/lens/lens/damage-prevention|damage-prevention|g' coverage.xml
+      shell: bash
+    - name: Upload xml coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: Backend xml coverage
+        path: ./damage-prevention/coverage.xml
+        if-no-files-found: error
+        retention-days: 1
+        overwrite: true
+    - name: Upload html coverage reports
+      uses: actions/upload-artifact@v4
+      with:
+        name: Backend html coverage
+        path: ./damage-prevention/htmlcov
+        if-no-files-found: error
+        retention-days: 1
+        overwrite: true
