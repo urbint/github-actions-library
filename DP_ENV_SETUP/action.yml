@@ -5,12 +5,41 @@ runs:
   steps:
     - name: Set Environment
       run: |
-        echo "POSTGRES_HOST=postgres" >> $GITHUB_ENV
-        echo "POSTGRES_PORT=5432" >> $GITHUB_ENV
-        echo "REDIS_HOST=redis" >> $GITHUB_ENV
-        echo "REDIS_PORT=6379" >> $GITHUB_ENV
-        echo "DEBUG=False" >> $GITHUB_ENV
-        echo "TEST=True" >> $GITHUB_ENV
-        echo "CI=True" >> $GITHUB_ENV
-        echo "ENABLE_GCS=False" >> $GITHUB_ENV
+        echo "POSTGRES_HOST=${{ inputs.POSTGRES_HOST }}" >> $GITHUB_ENV
+        echo "POSTGRES_PORT=${{ inputs.POSTGRES_PORT }}" >> $GITHUB_ENV
+        echo "REDIS_HOST=${{ inputs.REDIS_HOST }}" >> $GITHUB_ENV
+        echo "REDIS_PORT=${{ inputs.REDIS_PORT }}" >> $GITHUB_ENV
+        echo "DEBUG=${{ inputs.DEBUG }}" >> $GITHUB_ENV
+        echo "TEST=${{ inputs.TEST }}" >> $GITHUB_ENV
+        echo "CI=${{ inputs.CI }}" >> $GITHUB_ENV
+        echo "ENABLE_GCS=${{ inputs.ENABLE_GCS }}" >> $GITHUB_ENV
+        echo "PROJECT=${{ inputs.PROJECT }}" >> $GITHUB_ENV
       shell: bash
+inputs:
+  POSTGRES_HOST:
+    description: "PostgreSQL host"
+    required: true
+  POSTGRES_PORT:
+    description: "PostgreSQL port"
+    required: true
+  REDIS_HOST:
+    description: "Redis host"
+    required: true
+  REDIS_PORT:
+    description: "Redis port"
+    required: true
+  DEBUG:
+    description: "Debug mode"
+    required: true
+  TEST:
+    description: "Test mode"
+    required: true
+  CI:
+    description: "CI environment"
+    required: true
+  ENABLE_GCS:
+    description: "Enable GCS"
+    required: true
+  PROJECT:
+    description: "Project name"
+    required: true
