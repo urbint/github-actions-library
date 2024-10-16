@@ -48,7 +48,7 @@ runs:
       shell: bash  # Specify the shell for this step
     
     - name: Build and Scan
-      uses: urbint/CompositeAction/build-and-scan@feature/usable
+      uses: urbint/github-actions-library/build-and-scan@feature/usable
       with: 
         image_name: ${{ inputs.image_name }} 
         dockerfile: ${{ inputs.dockerfile }} 
