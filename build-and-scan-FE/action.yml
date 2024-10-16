@@ -1,11 +1,6 @@
 name: Build and Scan Docker Image
 
 description: Build a Docker image and scan it for vulnerabilities using Trivy.
-
-name: Build and Scan Docker Image
-
-description: Build a Docker image and scan it for vulnerabilities using Trivy.
-
 inputs:
   image_name:
     description: 'The name and tag of the Docker image (e.g., my-image:latest).'
