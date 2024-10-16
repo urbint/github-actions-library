@@ -14,8 +14,8 @@ inputs:
 runs:
   using: 'composite'
   steps:
-    - name: Checkout ws-customizable-workflow Repository
-      uses: actions/checkout@v4
+    # - name: Checkout ws-customizable-workflow Repository
+    #   uses: actions/checkout@v4
 
     - name: Checkout gitops Repository
       uses: actions/checkout@v4
