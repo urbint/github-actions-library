@@ -32,6 +32,7 @@ runs:
         repository: ${{ inputs.repo }}
         token: ${{ inputs.token }}
         ref: "${{ inputs.branch }}"
+        path: gitops
 
     - name: Update image tag
       shell: bash
