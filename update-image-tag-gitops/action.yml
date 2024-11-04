@@ -27,6 +27,7 @@ runs:
       uses: actions/checkout@v3
       with:
         repository: ${{ inputs.repo }}
+        token: ${{ inputs.token }}
         ref: "${{ inputs.branch }}"  # Use the branch input
 
     - name: Update image tag
