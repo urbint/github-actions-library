@@ -16,6 +16,9 @@ inputs:
   tag:
     description: "The tag value to set."
     required: true
+  branch:
+    description: "The branch to update."
+    required: true
 
 runs:
   using: "composite"
@@ -29,7 +32,7 @@ runs:
     - name: Update image tag
       shell: bash
       run: |
-        cd $(basename ${{ inputs.repo }})  # Go to the cloned directory
+        cd $(basename ${{ inputs.repo }})  # Navigate to the cloned directory
         yq eval ".images[] |= select(.name == \"${{ inputs.image_name }}\") |= .${{ inputs.tag_key }} = \"${{ inputs.tag }}\"" -i "${{ inputs.file_path }}"
         git add "${{ inputs.file_path }}"
         git commit -m "Update image tag to ${{ inputs.tag }}"
