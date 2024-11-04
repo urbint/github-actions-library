@@ -42,6 +42,7 @@ runs:
 
         cd gitops # Navigate to the cloned directory
         git checkout "${{ inputs.branch }}"
+        ls -la
         yq eval ".images[] |= select(.name == \"${{ inputs.image_name }}\") |= .${{ inputs.tag_key }} = \"${{ inputs.tag }}\"" -i "${{ inputs.file_path }}"
         git add "${{ inputs.file_path }}"
         git commit -m "Update image tag to ${{ inputs.tag }}"
