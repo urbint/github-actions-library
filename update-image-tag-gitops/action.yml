@@ -36,6 +36,7 @@ runs:
     - name: Update image tag
       shell: bash
       run: |
+        pwd
         ls -la
         cd gitops # Navigate to the cloned directory
         yq eval ".images[] |= select(.name == \"${{ inputs.image_name }}\") |= .${{ inputs.tag_key }} = \"${{ inputs.tag }}\"" -i "${{ inputs.file_path }}"
