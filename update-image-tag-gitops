@@ -1,0 +1,36 @@
+name: "Update Image Tag"
+description: "Updates the image tag in a specified kustomization.yaml file."
+inputs:
+  repo:
+    description: "The repository to update."
+    required: true
+  file_path:
+    description: "The path to the kustomization.yaml file to update."
+    required: true
+  tag_key:
+    description: "The key for the new image tag in the YAML."
+    required: true
+  image_name:
+    description: "The name of the image to update."
+    required: true
+  tag:
+    description: "The tag value to set."
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.repo }}
+        ref: "${{ inputs.branch }}"  # Use the branch input
+
+    - name: Update image tag
+      shell: bash
+      run: |
+        cd $(basename ${{ inputs.repo }})  # Go to the cloned directory
+        yq eval ".images[] |= select(.name == \"${{ inputs.image_name }}\") |= .${{ inputs.tag_key }} = \"${{ inputs.tag }}\"" -i "${{ inputs.file_path }}"
+        git add "${{ inputs.file_path }}"
+        git commit -m "Update image tag to ${{ inputs.tag }}"
+        git push origin "${{ inputs.branch }}"
