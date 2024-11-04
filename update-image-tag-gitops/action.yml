@@ -19,6 +19,9 @@ inputs:
   branch:
     description: "The branch to update."
     required: true
+  token:
+    description: "GitHub token for authentication."
+    required: true
 
 runs:
   using: "composite"
@@ -28,7 +31,7 @@ runs:
       with:
         repository: ${{ inputs.repo }}
         token: ${{ inputs.token }}
-        ref: "${{ inputs.branch }}"  # Use the branch input
+        ref: "${{ inputs.branch }}"
 
     - name: Update image tag
       shell: bash
