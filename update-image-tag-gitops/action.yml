@@ -37,13 +37,22 @@ runs:
     - name: Update image tag
       shell: bash
       run: |
-        pwd
-        ls -la
-
-        cd gitops # Navigate to the cloned directory
-        git checkout "${{ inputs.branch }}"
-        ls -la
-        yq eval ".images[] |= select(.name == \"${{ inputs.image_name }}\") |= .${{ inputs.tag_key }} = \"${{ inputs.tag }}\"" -i "${{ inputs.file_path }}"
-        git add "${{ inputs.file_path }}"
-        git commit -m "Update image tag to ${{ inputs.tag }}"
-        git push origin "${{ inputs.branch }}"
+          pwd
+          ls -la
+  
+          cd gitops # Navigate to the cloned directory
+          git checkout "${{ inputs.branch }}"
+          ls -la
+          
+          # Update the image tag
+          yq eval ".images[] |= select(.name == \"${{ inputs.image_name }}\") |= .${{ inputs.tag_key }} = \"${{ inputs.tag }}\"" -i "${{ inputs.file_path }}"
+          
+          # Check if there are changes to commit
+          if ! git diff --quiet; then
+            git add "${{ inputs.file_path }}"
+            git commit -m "Update image tag to ${{ inputs.tag }}"
+            git push origin "${{ inputs.branch }}"
+          else
+            echo "No changes to commit."
+          fi
+  
