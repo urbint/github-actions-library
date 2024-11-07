@@ -1,0 +1,51 @@
+name: "Deploy to ArgoCD"
+description: "Deploys an application to ArgoCD"
+
+inputs:
+  repo:
+    description: 'The GitHub repository to check out'
+    required: true
+  token:
+    description: 'GitHub token for authentication'
+    required: true
+  path:
+    description: 'Path to the repository after checkout'
+    required: true
+  ref:
+    description: 'Reference (branch/tag) to checkout'
+    required: true
+  argocd_server:
+    description: 'ArgoCD server URL'
+    required: true
+  argocd_token:
+    description: 'ArgoCD authentication token'
+    required: true
+  app_name:
+    description: 'Name of the ArgoCD application to sync'
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout GitOps Repository
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo }}
+        token: ${{ inputs.token }}
+        path: ${{ inputs.path }}
+        ref: ${{ inputs.ref }}
+
+    - name: Install Argo CD CLI
+      run: |
+        curl -sSL https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 -o argocd
+        chmod +x argocd
+        sudo mv argocd /usr/local/bin/
+        argocd version
+      shell: bash
+
+    - name: Sync Application with ArgoCD
+      run: |
+        argocd login ${{ inputs.argocd_server }} --insecure --auth-token ${{ inputs.argocd_token }}
+        argocd app sync ${{ inputs.app_name }} --grpc-web --prune --wait
+      shell: bash
+

@@ -1,0 +1,35 @@
+name: 'Run Migrations'
+description: 'Runs migrations for worker safety service'
+inputs:
+  postgres_host:
+    description: 'PostgreSQL host'
+    required: true
+  postgres_user:
+    description: 'PostgreSQL user'
+    required: true
+  postgres_password:
+    description: 'PostgreSQL password'
+    required: true
+  postgres_db:
+    description: 'PostgreSQL database'
+    required: true
+  migration_image_name:
+    description: 'Migration Docker image name'
+    required: true
+  migration_image_tag:
+    description: 'Migration Docker image tag'
+    required: true
+
+runs:
+  using: 'docker'
+  image: 'gcr.io/urbint-1259/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}'
+  env:
+    POSTGRES_HOST: ${{ inputs.postgres_host }}
+    POSTGRES_USER: ${{ inputs.postgres_user }}
+    POSTGRES_PASSWORD: ${{ inputs.postgres_password }}
+    POSTGRES_DB: ${{ inputs.postgres_db }}
+    APP_ENV: integ
+  entrypoint: "/bin/bash"
+  args:
+    - "-c"
+    - "alembic upgrade head"
