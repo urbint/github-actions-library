@@ -67,6 +67,7 @@ runs:
           # Use yq to update the image tag
           yq eval '.images |= map(select(.name == "${{ inputs.image_name }}") | .newTag = "${{ inputs.tag }}")' -i "${{ inputs.file_path }}"
 
+
           # Print the contents of the kustomization.yaml file after the update
           echo "=== After Update ==="
           cat "${{ inputs.file_path }}"
