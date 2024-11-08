@@ -46,6 +46,5 @@ runs:
     - name: Sync Application with ArgoCD
       run: |
         argocd login ${{ inputs.argocd_server }} --insecure --auth-token ${{ inputs.argocd_token }}
-        argocd app sync ${{ inputs.app_name }} --grpc-web --prune --wait
+        argocd app sync ${{ inputs.app_name }} --server ${{ inputs.argocd_server }} --grpc-web --prune --wait
       shell: bash
-
