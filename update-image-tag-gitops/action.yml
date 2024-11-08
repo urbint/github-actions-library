@@ -27,7 +27,7 @@ runs:
   using: "composite"
   steps:
     - name: Check out repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v4
       with:
         repository: ${{ inputs.repo }}
         token: ${{ inputs.token }}
@@ -35,6 +35,7 @@ runs:
         path: gitops
 
     - name: Check if yq is installed
+      shell: bash  # Specify the shell type here
       run: |
         echo "Checking if yq is installed..."
         if command -v yq > /dev/null 2>&1; then
@@ -50,7 +51,7 @@ runs:
         fi
 
     - name: Update image tag
-      shell: bash
+      shell: bash  # Specify the shell type here
       run: |
           pwd
           ls -la
