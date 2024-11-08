@@ -68,7 +68,7 @@ runs:
         cat "${{ inputs.file_path }}"
 
         # Use yq to update the image tag
-        yq eval '.images |= map(select(.name == "${{ inputs.image_name }}") | .newTag = "${{ inputs.tag }}")' -i "${{ inputs.file_path }}"
+        yq eval '(.images[] | select(.name == "${{ inputs.image_name }}")).newTag = "${{ inputs.tag }}"' -i "${{ inputs.file_path }}"
 
 
 
