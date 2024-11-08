@@ -40,12 +40,13 @@ runs:
         curl -sSL https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64 -o argocd
         chmod +x argocd
         sudo mv argocd /usr/local/bin/
-        argocd version
+        
       shell: bash
 
     # Step 3: Debugging - Check network connectivity to ArgoCD
     - name: Check network connectivity to ArgoCD
       run: |
+      
         echo "Checking if GitHub runner can reach the ArgoCD server..."
         ping -c 4 argocd.urbinternal.com || echo "Ping failed. Could not reach ArgoCD server."
       shell: bash
