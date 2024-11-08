@@ -46,11 +46,11 @@ runs:
         argocd version
       shell: bash
 
-    # Step 3: Debugging Step - Print environment variables and check argocd CLI status
+    # Step 3: Debugging Step - Print environment variables and check ArgoCD CLI status
     - name: Check environment and argocd version
       run: |
         echo "ArgoCD Server: ${{ inputs.argocd_server }}"
-        echo "ArgoCD Token: ${{ inputs.argocd_token }}"  # This is sensitive data, avoid printing in production
+        echo "ArgoCD Token: ${{ inputs.argocd_token }}"  # Sensitive data, avoid printing in production
         echo "Checking ArgoCD CLI version..."
         argocd version
         echo "Listing ArgoCD CLI configuration..."
@@ -61,6 +61,6 @@ runs:
     - name: Log in to ArgoCD
       run: |
         echo "Logging in to ArgoCD using the provided auth token..."
-        argocd login ${{ inputs.argocd_server }} --insecure --auth-token ${{ inputs.argocd_token }} --grpc-web
+        argocd login ${{ inputs.argocd_server }} --server ${{ inputs.argocd_server }} --auth-token ${{ inputs.argocd_token }} --insecure --grpc-web
         echo "Successfully logged into ArgoCD."
       shell: bash
