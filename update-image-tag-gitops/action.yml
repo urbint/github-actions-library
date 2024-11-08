@@ -27,7 +27,6 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Step 1: Checkout the repository
     - name: Check out repository
       uses: actions/checkout@v4
       with:
@@ -36,7 +35,7 @@ runs:
         ref: "${{ inputs.branch }}"
         path: gitops
 
-    # Step 2: Check if 'yq' is installed and install it if it's missing
+    # Step 1: Check if 'yq' is installed and install it if missing
     - name: Check if yq is installed
       shell: bash
       run: |
@@ -51,38 +50,43 @@ runs:
           mv ./yq_linux_amd64 /usr/local/bin/yq
           echo "yq installed, version:"
           yq --version
+        fi
 
-    # Step 3: Update image tag in kustomization.yaml file
+    # Step 2: Update the image tag in the kustomization.yaml file
     - name: Update image tag
       shell: bash
       run: |
-          pwd
-          ls -la
-          
-          cd gitops # Navigate to the cloned repository
-          git checkout "${{ inputs.branch }}"
-          ls -la
-          
-          # Print the current contents of the kustomization.yaml file before updating
-          echo "=== Before Update ==="
-          cat "${{ inputs.file_path }}"
+        pwd
+        ls -la
+  
+        cd gitops # Navigate to the cloned directory
+        git checkout "${{ inputs.branch }}"
+        ls -la
+        
+        # Print the current contents of the kustomization.yaml file before updating
+        echo "=== Before Update ==="
+        cat "${{ inputs.file_path }}"
 
-          # Use yq to update the image tag in the kustomization.yaml file
-          yq eval '.images |= map(select(.name == "${{ inputs.image_name }}") | .newTag = "${{ inputs.tag }}")' -i "${{ inputs.file_path }}"
+        # Use yq to update the image tag
+        yq eval '.images |= map(select(.name == "${{ inputs.image_name }}") | .newTag = "${{ inputs.tag }}")' -i "${{ inputs.file_path }}"
 
-          # Print the contents of the kustomization.yaml file after the update
-          echo "=== After Update ==="
-          cat "${{ inputs.file_path }}"
+        # Print the contents of the kustomization.yaml file after the update
+        echo "=== After Update ==="
+        cat "${{ inputs.file_path }}"
 
-          # Check if there are changes to commit (specifically to the kustomization.yaml file)
-          git diff "${{ inputs.file_path }}"
-          
-          # Commit and push changes if any changes are detected
-          if ! git diff --quiet; then
-            echo "Changes detected. Proceeding with commit and push."
-            git add "${{ inputs.file_path }}"
-            git commit -m "Update image tag for ${inputs.image_name} to ${inputs.tag}"
-            git push origin "${{ inputs.branch }}"
-          else
-            echo "No changes detected in the file."
-          fi
+        # Check if there are changes to commit
+        git diff "${{ inputs.file_path }}"
+
+        # Optionally, check if the file is marked as changed (useful for debugging)
+        if ! git diff --quiet; then
+          echo "File has changes. You can proceed with commit and push."
+        else
+          echo "No changes detected in the file."
+        fi
+
+        # Commit and push the changes if there were any
+        if ! git diff --quiet; then
+          git add "${{ inputs.file_path }}"
+          git commit -m "Update image tag to ${{ inputs.tag }}"
+          git push origin "${{ inputs.branch }}"
+        fi
