@@ -61,6 +61,6 @@ runs:
     - name: Log in to ArgoCD
       run: |
         echo "Logging in to ArgoCD using the provided auth token..."
-        argocd login ${{ inputs.argocd_server }} --server ${{ inputs.argocd_server }} --auth-token ${{ inputs.argocd_token }} --insecure --grpc-web
+        argocd login argocd.urbinternal.com --server argocd.urbinternal.com --auth-token ${{ inputs.argocd_token }} --insecure --grpc-web
         echo "Successfully logged into ArgoCD."
       shell: bash
