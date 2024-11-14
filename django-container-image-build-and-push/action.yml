@@ -61,6 +61,8 @@ runs:
         echo "gcr_hostname: ${{ inputs.gcr_hostname }}"
         echo "google_cloud_project: ${{ inputs.google_cloud_project }}"
         echo "lens_image_name: ${{ inputs.lens_image_name }}"
+        echo "superset_image_name: ${{ inputs.superset_image_name }}"
+      shell: bash  # Added shell property to run this in bash
 
     - name: Build and Push Lens app to GCR
       uses: docker/build-push-action@v4
@@ -74,6 +76,7 @@ runs:
           APP_COMMIT_SHA=${{ github.sha }}
           APP_COMMIT_URL=${{ github.repository }}/commit/${{ github.sha }}
           APP_BUILD_URL=${{ github.repository }}/actions/runs/${{ github.run_id }}
+      shell: bash  # Added shell property to run this in bash
 
     - name: Build and Push Superset app to GCR
       uses: docker/build-push-action@v4
@@ -81,3 +84,4 @@ runs:
         push: true
         context: ${{ inputs.superset_dockerfile_context }}
         tags: ${{ inputs.gcr_hostname || 'gcr.io' }}/${{ inputs.google_cloud_project || 'your-default-project-id' }}/${{ inputs.superset_image_name }}:${{ github.sha }}
+      shell: bash  # Added shell property to run this in bash
