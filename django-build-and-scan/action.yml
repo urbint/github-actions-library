@@ -1,4 +1,4 @@
-# django-build-and-scan.yaml (Reusable Action)
+name: 'Build and Scan Images'
 
 description: 'Builds Docker images and scans them for vulnerabilities.'
 inputs:

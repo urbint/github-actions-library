@@ -1,41 +1,55 @@
-name: 'Container Image Build and Push to GCR'
-description: 'This action authenticates to Google Cloud, builds Docker images, and pushes them to GCR.'
+name: Container Image Build and Push
+
+description: A composite action to authenticate to Google Cloud, build Docker images, and push them to GCR.
 
 inputs:
-  gcr_sa_key:
-    description: 'The Google Cloud service account JSON key for authentication.'
-    required: true
-  lens_dockerfile_path:
-    description: 'Path to the Dockerfile for the Lens app.'
-    required: true
-  superset_dockerfile_path:
-    description: 'Path to the Dockerfile for Superset.'
+  credentials_json:
+    description: 'Google Cloud service account key JSON.'
     required: true
   gcr_hostname:
-    description: 'The GCR hostname, e.g., gcr.io.'
-    required: true
+    description: 'Google Cloud Registry hostname (default: gcr.io).'
+    required: false
+    default: 'gcr.io'
   google_cloud_project:
-    description: 'The Google Cloud project ID.'
+    description: 'Google Cloud project ID.'
     required: true
-  lens_image_tag:
-    description: 'The Docker tag for the Lens image.'
+  lens_image_name:
+    description: 'The name of the Lens app image.'
     required: true
-  superset_image_tag:
-    description: 'The Docker tag for the Superset image.'
+  superset_image_name:
+    description: 'The name of the Superset app image.'
     required: true
-  github_token:
-    description: 'GitHub token for accessing repo-related information (e.g., commit SHA).'
+  lens_dockerfile_path:
+    description: 'Path to Lens app Dockerfile.'
+    required: true
+  superset_dockerfile_context:
+    description: 'Path to Superset app Docker build context.'
+    required: true
+  github_auth_token:
+    description: 'GitHub personal access token.'
+    required: true
+  github_repo:
+    description: 'GitHub repository name (e.g., owner/repo).'
+    required: true
+  github_sha:
+    description: 'GitHub SHA reference (e.g., commit hash or branch name).'
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
+    - name: Checkout repository code
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.github_repo }}
+        ref: ${{ inputs.github_sha }}
+
     - name: Authenticate to Google Cloud
       id: auth
       uses: google-github-actions/auth@v1
       with:
         token_format: "access_token"
-        credentials_json: ${{ inputs.gcr_sa_key }}
+        credentials_json: ${{ inputs.credentials_json }}
 
     - name: Log into Google Container Registry
       uses: docker/login-action@v2
@@ -44,22 +58,22 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
 
-    - name: Build and Push Lens app Docker image
+    - name: Build and Push Lens app to GCR
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/lens-damage-prevention-test:${{ inputs.lens_image_tag }}
+        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/${{ inputs.lens_image_name }}:${{ github.sha }}
         file: ${{ inputs.lens_dockerfile_path }}
         build-args: |
           PORT=8080
-          GITHUB_AUTH_TOKEN=${{ inputs.github_token }}
+          GITHUB_AUTH_TOKEN=${{ inputs.github_auth_token }}
           APP_COMMIT_SHA=${{ github.sha }}
           APP_COMMIT_URL=${{ github.repository }}/commit/${{ github.sha }}
           APP_BUILD_URL=${{ github.repository }}/actions/runs/${{ github.run_id }}
 
-    - name: Build and Push Superset app Docker image
+    - name: Build and Push Superset app to GCR
       uses: docker/build-push-action@v4
       with:
         push: true
-        context: ${{ inputs.superset_dockerfile_path }}
-        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/lens-superset-test:${{ inputs.superset_image_tag }}
+        context: ${{ inputs.superset_dockerfile_context }}
+        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/${{ inputs.superset_image_name }}:${{ github.sha }}
