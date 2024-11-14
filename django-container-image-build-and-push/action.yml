@@ -62,7 +62,7 @@ runs:
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/${{ inputs.lens_image_name }}:${{ github.sha }}
+        tags: ${{ replace(inputs.gcr_hostname, '/$', '') }}/${{ inputs.google_cloud_project }}/${{ inputs.lens_image_name }}:${{ github.sha }}
         file: ${{ inputs.lens_dockerfile_path }}
         build-args: |
           PORT=8080
@@ -76,4 +76,4 @@ runs:
       with:
         push: true
         context: ${{ inputs.superset_dockerfile_context }}
-        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/${{ inputs.superset_image_name }}:${{ github.sha }}
+        tags: ${{ replace(inputs.gcr_hostname, '/$', '') }}/${{ inputs.google_cloud_project }}/${{ inputs.superset_image_name }}:${{ github.sha }}
