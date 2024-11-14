@@ -74,4 +74,4 @@ runs:
       shell: bash  # Specify bash for this shell command
       run: |
         echo "Scanning Superset Docker image for vulnerabilities..."
-        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-superset:${{ inputs.github.sha }}
+        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-superset:${{ inputs.github_sha }}
