@@ -1,0 +1,72 @@
+name: 'Build and Scan Docker Images'
+description: 'This action builds and scans Docker images for vulnerabilities using Trivy.'
+inputs:
+  github_token:
+    description: 'GitHub Token to access repository.'
+    required: true
+  lens_dockerfile_path:
+    description: 'Path to the Dockerfile for the Lens app.'
+    required: true
+  superset_dockerfile_path:
+    description: 'Path to the Dockerfile for Superset.'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v3
+
+    - name: Build Lens app Docker image
+      uses: docker/build-push-action@v4
+      with:
+        push: false
+        tags: lens-damage-prevention-test:${{ github.sha }}
+        file: ${{ inputs.lens_dockerfile_path }}
+        build-args: |
+          PORT=8080
+          GITHUB_AUTH_TOKEN=${{ inputs.github_token }}
+          APP_COMMIT_SHA=${{ github.sha }}
+          APP_COMMIT_URL=${{ github.repository }}/commit/${{ github.sha }}
+          APP_BUILD_URL=${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+    - name: Build Superset app Docker image
+      uses: docker/build-push-action@v4
+      with:
+        push: false
+        context: ${{ inputs.superset_dockerfile_path }}
+        tags: lens-superset-test:${{ github.sha }}
+
+    - name: Cache Trivy DB
+      id: cache-trivy-db
+      uses: actions/cache@v3
+      with:
+        path: ~/.cache/trivy
+        key: trivy-db-${{ runner.os }}-${{ github.sha }}
+        restore-keys: |
+          trivy-db-${{ runner.os }}-
+          trivy-db-
+
+    - name: Install Trivy
+      shell: bash
+      run: |
+        sudo apt-get update && sudo apt-get install wget -y
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb
+        sudo dpkg -i trivy_0.45.1_Linux-64bit.deb
+
+    - name: Update Trivy DB
+      shell: bash
+      run: |
+        trivy db update || echo "Failed to update DB, using cached version."
+
+    - name: Scan Lens Docker image for vulnerabilities
+      continue-on-error: true
+      run: |
+        echo "Scanning Lens Docker image for vulnerabilities..."
+        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-damage-prevention-test:${{ github.sha }}
+
+    - name: Scan Superset Docker image for vulnerabilities
+      continue-on-error: true
+      run: |
+        echo "Scanning Superset Docker image for vulnerabilities..."
+        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-superset-test:${{ github.sha }}
