@@ -1,48 +1,53 @@
-name: 'Build and Scan Docker Images'
-description: 'This action builds and scans Docker images for vulnerabilities using Trivy.'
+name: Build and Scan Images
+description: Builds and scans Docker images for vulnerabilities
 inputs:
   github_token:
-    description: 'GitHub Token to access repository.'
+    description: 'GitHub Authentication Token'
     required: true
-  lens_dockerfile_path:
-    description: 'Path to the Dockerfile for the Lens app.'
+  cindy_pat:
+    description: 'Cindy Personal Access Token'
     required: true
-  superset_dockerfile_path:
-    description: 'Path to the Dockerfile for Superset.'
+  commit_sha:
+    description: 'Commit SHA for image tagging'
+    required: true
+  repository:
+    description: 'Repository name'
+    required: true
+  run_id:
+    description: 'GitHub Actions Run ID'
     required: true
 
 runs:
-  using: 'composite'
+  using: "composite"
   steps:
-    - name: Checkout code
+    - name: Checkout commit
       uses: actions/checkout@v3
 
-    - name: Build Lens app Docker image
+    - name: Build Lens app
       uses: docker/build-push-action@v4
       with:
         push: false
-        tags: lens-damage-prevention-test:${{ github.sha }}
-        file: ${{ inputs.lens_dockerfile_path }}
+        tags: lens-damage-prevention:${{ inputs.commit_sha }}
         build-args: |
           PORT=8080
-          GITHUB_AUTH_TOKEN=${{ inputs.github_token }}
-          APP_COMMIT_SHA=${{ github.sha }}
-          APP_COMMIT_URL=${{ github.repository }}/commit/${{ github.sha }}
-          APP_BUILD_URL=${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GITHUB_AUTH_TOKEN=${{ inputs.cindy_pat }}
+          APP_COMMIT_SHA=${{ inputs.commit_sha }}
+          APP_COMMIT_URL=${{ inputs.repository }}/commit/${{ inputs.commit_sha }}
+          APP_BUILD_URL=${{ inputs.repository }}/actions/runs/${{ inputs.run_id }}
 
-    - name: Build Superset app Docker image
+    - name: Build Superset
       uses: docker/build-push-action@v4
       with:
         push: false
-        context: ${{ inputs.superset_dockerfile_path }}
-        tags: lens-superset-test:${{ github.sha }}
+        context: support/docker/superset
+        tags: lens-superset:${{ inputs.commit_sha }}
 
     - name: Cache Trivy DB
       id: cache-trivy-db
       uses: actions/cache@v3
       with:
         path: ~/.cache/trivy
-        key: trivy-db-${{ runner.os }}-${{ github.sha }}
+        key: trivy-db-${{ runner.os }}-${{ inputs.commit_sha }}
         restore-keys: |
           trivy-db-${{ runner.os }}-
           trivy-db-
@@ -59,16 +64,16 @@ runs:
       run: |
         trivy db update || echo "Failed to update DB, using cached version."
 
-    - name: Scan Lens Docker image for vulnerabilities
+    - name: Scan Lens Image
       continue-on-error: true
-      shell: bash   # Added shell: bash
+      shell: bash
       run: |
         echo "Scanning Lens Docker image for vulnerabilities..."
-        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-damage-prevention-test:${{ github.sha }}
+        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-damage-prevention:${{ inputs.commit_sha }}
 
-    - name: Scan Superset Docker image for vulnerabilities
+    - name: Scan Superset Image
       continue-on-error: true
-      shell: bash   # Added shell: bash
+      shell: bash
       run: |
         echo "Scanning Superset Docker image for vulnerabilities..."
-        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-superset-test:${{ github.sha }}
+        trivy image --exit-code 1 --severity HIGH,CRITICAL lens-superset:${{ inputs.commit_sha }}
