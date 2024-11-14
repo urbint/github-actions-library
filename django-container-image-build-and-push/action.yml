@@ -1,5 +1,3 @@
-name: Container Image Build and Push
-
 description: A composite action to authenticate to Google Cloud, build Docker images, and push them to GCR.
 
 inputs:
@@ -54,15 +52,21 @@ runs:
     - name: Log into Google Container Registry
       uses: docker/login-action@v2
       with:
-        registry: ${{ inputs.gcr_hostname }}
+        registry: ${{ inputs.gcr_hostname || 'gcr.io' }}
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
+
+    - name: Debug values (for troubleshooting)
+      run: |
+        echo "gcr_hostname: ${{ inputs.gcr_hostname }}"
+        echo "google_cloud_project: ${{ inputs.google_cloud_project }}"
+        echo "lens_image_name: ${{ inputs.lens_image_name }}"
 
     - name: Build and Push Lens app to GCR
       uses: docker/build-push-action@v4
       with:
         push: true
-        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/${{ inputs.lens_image_name }}:${{ github.sha }}
+        tags: ${{ inputs.gcr_hostname || 'gcr.io' }}/${{ inputs.google_cloud_project || 'your-default-project-id' }}/${{ inputs.lens_image_name }}:${{ github.sha }}
         file: ${{ inputs.lens_dockerfile_path }}
         build-args: |
           PORT=8080
@@ -76,4 +80,4 @@ runs:
       with:
         push: true
         context: ${{ inputs.superset_dockerfile_context }}
-        tags: ${{ inputs.gcr_hostname }}/${{ inputs.google_cloud_project }}/${{ inputs.superset_image_name }}:${{ github.sha }}
+        tags: ${{ inputs.gcr_hostname || 'gcr.io' }}/${{ inputs.google_cloud_project || 'your-default-project-id' }}/${{ inputs.superset_image_name }}:${{ github.sha }}
