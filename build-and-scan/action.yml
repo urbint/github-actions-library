@@ -25,6 +25,8 @@ runs:
       id: build
       shell: bash
       run: |
+        pwd
+        ls -lrth
         docker build -t ${{ inputs.image_name }} -f ${{ inputs.dockerfile }} ${{ inputs.context }}
 
     - name: List Docker Images

@@ -1,3 +1,4 @@
+name: build Docker images, and push them to GCR.
 description: A composite action to authenticate to Google Cloud, build Docker images, and push them to GCR.
 
 inputs:
