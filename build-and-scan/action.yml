@@ -61,7 +61,7 @@ runs:
     # Handle retry logic for DB download due to rate-limiting
     - name: Update Trivy DB
       run: |
-        MAX_RETRIES=5
+        MAX_RETRIES=10
         RETRY_COUNT=0
         SUCCESS=false
         while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
@@ -71,8 +71,9 @@ runs:
             break
           else
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "Retrying Trivy DB update... Attempt $RETRY_COUNT of $MAX_RETRIES"
-            sleep 10
+            WAIT_TIME=$((RETRY_COUNT * 10))  # Exponential backoff (increasing wait time between retries)
+            echo "Retrying Trivy DB update... Attempt $RETRY_COUNT of $MAX_RETRIES. Waiting $WAIT_TIME seconds."
+            sleep $WAIT_TIME
           fi
         done
 
