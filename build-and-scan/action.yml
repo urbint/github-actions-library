@@ -20,23 +20,25 @@ runs:
   steps:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
+      shell: bash
 
     - name: Build Docker image
       id: build
-      shell: bash
       run: |
         pwd
         ls -lrth
         docker build -t ${{ inputs.image_name }} -f ${{ inputs.dockerfile }} ${{ inputs.context }}
+      shell: bash
 
     - name: List Docker Images
-      shell: bash
       run: docker images
+      shell: bash
 
     # Clean up unused Docker resources to free up space
     - name: Clean up unused Docker resources
       run: |
         docker system prune -af || true
+      shell: bash
 
     # Cache Trivy DB to avoid downloading it on each run
     - name: Cache Trivy DB
@@ -48,12 +50,13 @@ runs:
         restore-keys: |
           trivy-db-${{ runner.os }}-
           trivy-db-
+      shell: bash
 
     - name: Install Trivy
-      shell: bash
       run: |
         curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb -o trivy.deb
         sudo dpkg -i trivy.deb
+      shell: bash
 
     # Set a custom TMPDIR to prevent "no space left on device" error
     - name: Set TMPDIR to a larger location
@@ -61,11 +64,11 @@ runs:
         mkdir -p /home/runner/tmp
         export TMPDIR=/home/runner/tmp
         echo "TMPDIR set to /home/runner/tmp"
+      shell: bash
 
     # Add retry mechanism to handle temporary rate limit failures
     - name: Run Trivy Scan
       id: trivy
-      shell: bash
       run: |
         echo "Running Trivy scan for image: ${{ inputs.image_name }}"
         # Retry logic for DB download error
@@ -90,11 +93,11 @@ runs:
         else
           echo "Trivy scan failed after $MAX_RETRIES attempts."
           exit 1
-        fi
+      shell: bash
 
     - name: Fail if Trivy Scan Fails
       if: ${{ steps.trivy.outcome != 'success' }}
-      shell: bash
       run: |
         echo "Trivy scan failed, vulnerabilities found in image!"
         exit 1
+      shell: bash
