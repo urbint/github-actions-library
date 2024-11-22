@@ -20,7 +20,7 @@ runs:
   steps:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-      shell: bash
+      
 
     - name: Build Docker image
       id: build
@@ -50,7 +50,7 @@ runs:
         restore-keys: |
           trivy-db-${{ runner.os }}-
           trivy-db-
-      shell: bash
+      
 
     - name: Install Trivy
       run: |
