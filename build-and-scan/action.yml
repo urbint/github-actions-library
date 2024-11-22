@@ -66,33 +66,35 @@ runs:
         echo "TMPDIR set to /home/runner/tmp"
       shell: bash
 
-    # Add retry mechanism to handle temporary rate limit failures
-    - name: Run Trivy Scan
-      id: trivy
+    # Handle retry logic for DB download due to rate-limiting
+    - name: Update Trivy DB
       run: |
-        echo "Running Trivy scan for image: ${{ inputs.image_name }}"
-        # Retry logic for DB download error
         MAX_RETRIES=5
         RETRY_COUNT=0
         SUCCESS=false
         while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-          # Run the Trivy scan command
-          trivy image --severity HIGH,CRITICAL --format json --no-progress --cache-dir /tmp/trivy-cache ${{ inputs.image_name }} > trivy-report.json
+          trivy db update || echo "Failed to update DB, using cached version."
           if [ $? -eq 0 ]; then
             SUCCESS=true
             break
           else
             RETRY_COUNT=$((RETRY_COUNT + 1))
-            echo "Retrying Trivy scan... Attempt $RETRY_COUNT of $MAX_RETRIES"
-            sleep 5
+            echo "Retrying Trivy DB update... Attempt $RETRY_COUNT of $MAX_RETRIES"
+            sleep 10
           fi
         done
 
-        if [ "$SUCCESS" = true ]; then
-          cat trivy-report.json
-        else
-          echo "Trivy scan failed after $MAX_RETRIES attempts."
-          exit 1
+        if [ "$SUCCESS" = false ]; then
+          echo "Trivy DB update failed after $MAX_RETRIES attempts. Proceeding with cached version."
+        fi
+      shell: bash
+
+    # Run the Trivy image scan with severity filter
+    - name: Run Trivy Scan
+      id: trivy
+      run: |
+        trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}
+      continue-on-error: true
       shell: bash
 
     - name: Fail if Trivy Scan Fails
