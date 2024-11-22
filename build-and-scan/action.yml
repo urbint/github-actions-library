@@ -33,6 +33,11 @@ runs:
       shell: bash
       run: docker images
 
+    # Clean up unused Docker resources to free up space
+    - name: Clean up unused Docker resources
+      run: |
+        docker system prune -af || true
+
     # Cache Trivy DB to avoid downloading it on each run
     - name: Cache Trivy DB
       id: cache-trivy-db
@@ -49,6 +54,13 @@ runs:
       run: |
         curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb -o trivy.deb
         sudo dpkg -i trivy.deb
+
+    # Set a custom TMPDIR to prevent "no space left on device" error
+    - name: Set TMPDIR to a larger location
+      run: |
+        mkdir -p /home/runner/tmp
+        export TMPDIR=/home/runner/tmp
+        echo "TMPDIR set to /home/runner/tmp"
 
     # Add retry mechanism to handle temporary rate limit failures
     - name: Run Trivy Scan
