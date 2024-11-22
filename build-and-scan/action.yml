@@ -46,25 +46,20 @@ runs:
     - name: Install Trivy
       shell: bash
       run: |
-        sudo apt-get update && sudo apt-get install wget -y
-        wget https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb
-        sudo dpkg -i trivy_0.45.1_Linux-64bit.deb
+        curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb -o trivy.deb
+        sudo dpkg -i trivy.deb
 
-    - name: Update Trivy DB
-      shell: bash
-      run: |
-        trivy db update || echo "Failed to update DB, using cached version."
-
-    - name: Trivy Scan
+    - name: Run Trivy Scan
       id: trivy
       shell: bash
       run: |
-        trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}
-      continue-on-error: true
+        echo "Running Trivy scan for image: ${{ inputs.image_name }}"
+        trivy image --severity HIGH,CRITICAL --format json --no-progress --cache-dir /tmp/trivy-cache ${{ inputs.image_name }} > trivy-report.json
+        cat trivy-report.json
 
     - name: Fail if Trivy Scan Fails
       if: ${{ steps.trivy.outcome != 'success' }}
       shell: bash
       run: |
-        echo "Trivy scan failed, cannot proceed."
+        echo "Trivy scan failed, vulnerabilities found in image!"
         exit 1
