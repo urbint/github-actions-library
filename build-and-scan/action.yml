@@ -33,6 +33,7 @@ runs:
       shell: bash
       run: docker images
 
+    # Cache Trivy DB to avoid downloading it on each run
     - name: Cache Trivy DB
       id: cache-trivy-db
       uses: actions/cache@v3
@@ -49,13 +50,35 @@ runs:
         curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb -o trivy.deb
         sudo dpkg -i trivy.deb
 
+    # Add retry mechanism to handle temporary rate limit failures
     - name: Run Trivy Scan
       id: trivy
       shell: bash
       run: |
         echo "Running Trivy scan for image: ${{ inputs.image_name }}"
-        trivy image --severity HIGH,CRITICAL --format json --no-progress --cache-dir /tmp/trivy-cache ${{ inputs.image_name }} > trivy-report.json
-        cat trivy-report.json
+        # Retry logic for DB download error
+        MAX_RETRIES=5
+        RETRY_COUNT=0
+        SUCCESS=false
+        while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
+          # Run the Trivy scan command
+          trivy image --severity HIGH,CRITICAL --format json --no-progress --cache-dir /tmp/trivy-cache ${{ inputs.image_name }} > trivy-report.json
+          if [ $? -eq 0 ]; then
+            SUCCESS=true
+            break
+          else
+            RETRY_COUNT=$((RETRY_COUNT + 1))
+            echo "Retrying Trivy scan... Attempt $RETRY_COUNT of $MAX_RETRIES"
+            sleep 5
+          fi
+        done
+
+        if [ "$SUCCESS" = true ]; then
+          cat trivy-report.json
+        else
+          echo "Trivy scan failed after $MAX_RETRIES attempts."
+          exit 1
+        fi
 
     - name: Fail if Trivy Scan Fails
       if: ${{ steps.trivy.outcome != 'success' }}
