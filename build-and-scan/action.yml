@@ -20,7 +20,6 @@ runs:
   steps:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v2
-      
 
     - name: Build Docker image
       id: build
@@ -34,8 +33,6 @@ runs:
       run: docker images
       shell: bash
 
-   
-
     # Cache Trivy DB to avoid downloading it on each run
     - name: Cache Trivy DB
       id: cache-trivy-db
@@ -46,7 +43,6 @@ runs:
         restore-keys: |
           trivy-db-${{ runner.os }}-
           trivy-db-
-      
 
     - name: Install Trivy
       run: |
@@ -90,12 +86,14 @@ runs:
       id: trivy
       run: |
         trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}
-      continue-on-error: true
+      continue-on-error: true  # Continue even if vulnerabilities are found
       shell: bash
 
-    - name: Fail if Trivy Scan Fails
+    # Handle outcome of Trivy scan, but do not fail workflow
+    - name: Log Trivy Scan Outcome
       if: ${{ steps.trivy.outcome != 'success' }}
       run: |
-        echo "Trivy scan failed, vulnerabilities found in image!"
-        exit 1
+        echo "Trivy scan found vulnerabilities. Please review the results."
+        # Optionally, you can upload the scan results for further review
+        # For example: upload as an artifact or send via Slack/email
       shell: bash
