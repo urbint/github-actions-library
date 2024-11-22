@@ -34,11 +34,7 @@ runs:
       run: docker images
       shell: bash
 
-    # Clean up unused Docker resources to free up space
-    - name: Clean up unused Docker resources
-      run: |
-        docker system prune -af || true
-      shell: bash
+   
 
     # Cache Trivy DB to avoid downloading it on each run
     - name: Cache Trivy DB
