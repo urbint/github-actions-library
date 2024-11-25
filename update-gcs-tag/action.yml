@@ -7,6 +7,10 @@ inputs:
   image_tag:
     description: "The image tag to be updated."
     required: true
+  gcs_service_account_key:
+    description: "The GCS service account key in JSON format."
+    required: true  
+
 runs:
   using: "node12"
   main: "update-gcs-tag.js"
