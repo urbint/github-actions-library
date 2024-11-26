@@ -1,29 +1,34 @@
-const core = require('@actions/core');
 const { Storage } = require('@google-cloud/storage');
 const fs = require('fs');
 
 async function updateImageTag() {
   try {
-    // Get inputs
-    const bucketPath = core.getInput('bucket-path');
-    const imageTag = core.getInput('image-tag');
-    const credentialsJson = core.getInput('credentials-json');
     
-    // Authenticate using the credentials JSON
-    const storage = new Storage({
-      keyFilename: credentialsJson,
-    });
-    
-    // Assuming the image is stored as a .tar file (adjust this as needed)
-    const sourceImagePath = `gs://${bucketPath}/${imageTag}.tar`;
-    const updatedImagePath = `gs://${bucketPath}/${imageTag}-updated.tar`;
-    
-    // Copy the image with the new tag
-    await storage.bucket(bucketPath).file(`${imageTag}.tar`).copy(`${imageTag}-updated.tar`);
+    const bucketPath = process.env.BUCKET_PATH;  
+    const imageTag = process.env.IMAGE_TAG;      
+    const credentialsJson = process.env.GCS_SERVICE_ACCOUNT_KEY; 
 
-    console.log(`Image tag updated from ${imageTag} to ${imageTag}-updated in GCS.`);
+    
+    const credentialsPath = '/tmp/gcs-key.json';
+    fs.writeFileSync(credentialsPath, credentialsJson);
+
+    
+    const storage = new Storage({
+      keyFilename: credentialsPath,
+    });
+
+    
+    const sourceFileName = `${imageTag}.sha`;
+    const updatedFileName = `${imageTag}-updated.sha`;
+
+   
+    const bucket = storage.bucket(bucketPath);
+    await bucket.file(sourceFileName).copy(bucket.file(updatedFileName));
+
+    console.log(`Image tag updated from ${sourceFileName} to ${updatedFileName} in GCS.`);
   } catch (error) {
-    core.setFailed(`Action failed: ${error.message}`);
+    console.error(`Action failed: ${error.message}`);
+    process.exit(1);
   }
 }
 
