@@ -89,6 +89,6 @@ runs:
         # Commit and push the changes if there were any
         if ! git diff --quiet; then
           git add "${{ inputs.file_path }}"
-          git commit -m "Update image tag to ${{ inputs.tag }}"
+          git commit -m "Update image tag for ${{ inputs.image_name }} to ${{ inputs.tag }}"
           git push origin "${{ inputs.branch }}"
         fi
