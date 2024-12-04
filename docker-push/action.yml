@@ -44,4 +44,4 @@ runs:
         context: .
         file: ${{ inputs.dockerfile }}  
         push: true
-        tags: gcr.io/urbint-1259/my-local-image:${{ inputs.tag }} 
+        tags: gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }} 
