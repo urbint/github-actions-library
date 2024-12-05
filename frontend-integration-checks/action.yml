@@ -1,0 +1,89 @@
+name: "Integration Checks"
+
+description: "Run integration checks including migrations, integration tests, and seed data tests"
+
+inputs:
+  repository:
+    description: 'Repository to check out'
+    required: true
+    default: 'main-repo'  # The main repository you want to checkout
+  postgres_host:
+    description: 'PostgreSQL Host'
+    required: true
+  postgres_user:
+    description: 'PostgreSQL User'
+    required: true
+  postgres_pass:
+    description: 'PostgreSQL Password'
+    required: true
+  postgres_db:
+    description: 'PostgreSQL Database'
+    required: true
+  redis_host:
+    description: 'Redis Host'
+    required: true
+  protocol_buffers_python_implementation:
+    description: 'Protocol Buffers Python Implementation'
+    required: true
+  branch_name:
+    description: 'Branch Name'
+    required: true  
+
+runs:
+  using: "composite"
+  steps:
+    - name: Check out repository
+      uses: actions/checkout@v2
+      with:
+        repository: ${{ inputs.repository }}
+        ref: ${{ inputs.branch_name }}   # You can specify the branch you want to use
+
+    - name: Set up Python environment
+      run: |
+        python -m venv .venv
+        . .venv/bin/activate
+        python -m pip install --upgrade pip
+      shell: bash  # Specify shell to use
+
+    - name: Run Migrations
+      run: |
+        . .venv/bin/activate
+        alembic upgrade head
+        alembic downgrade -1
+      shell: bash  # Specify shell to use
+      env:
+        POSTGRES_HOST: ${{ inputs.postgres_host }}
+        POSTGRES_USER: ${{ inputs.postgres_user }}
+        POSTGRES_PASS: ${{ inputs.postgres_pass }}
+        POSTGRES_DB: ${{ inputs.postgres_db }}
+        REDIS_HOST: ${{ inputs.redis_host }}
+
+    - name: Run Integration Tests
+      run: |
+        . .venv/bin/activate
+        apt-get update && apt-get -y install libpq-dev && apt-get clean
+        pytest --reruns 1 --durations=30 -n auto --maxprocesses=8 -k 'not test_project_number_as_alphanumeric' --ignore=tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest --reruns 1 --durations=5 -v tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest -v tests/integration/mutations/test_projects.py
+      shell: bash  # Specify shell to use
+      env:
+        POSTGRES_HOST: ${{ inputs.postgres_host }}
+        POSTGRES_USER: ${{ inputs.postgres_user }}
+        POSTGRES_PASS: ${{ inputs.postgres_pass }}
+        POSTGRES_DB: ${{ inputs.postgres_db }}
+        REDIS_HOST: ${{ inputs.redis_host }}
+        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: ${{ inputs.protocol_buffers_python_implementation }}
+
+    - name: Run Seed Data Generation
+      run: |
+        . .venv/bin/activate
+        python ./support/scripts/seed/main.py recreate-backup
+        python ./support/scripts/seed/main.py restore-from-backup
+      shell: bash  # Specify shell to use
+      env:
+        POSTGRES_HOST: ${{ inputs.postgres_host }}
+        POSTGRES_USER: ${{ inputs.postgres_user }}
+        POSTGRES_PASS: ${{ inputs.postgres_pass }}
+        POSTGRES_DB: ${{ inputs.postgres_db }}
+        REDIS_HOST: ${{ inputs.redis_host }}
+        PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: ${{ inputs.protocol_buffers_python_implementation }}
