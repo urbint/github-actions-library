@@ -62,7 +62,7 @@ runs:
     - name: Wait for Redis to be ready
       shell: bash
       run: |
-        until docker exec redis redis-cli -h redis ping; do
+        until docker exec redis redis-cli PING | grep -q "PONG"; do
           echo "Waiting for Redis to be ready..."
           sleep 2
         done
