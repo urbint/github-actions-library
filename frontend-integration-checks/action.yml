@@ -66,8 +66,8 @@ runs:
       run: |
         . .venv/bin/activate
         apt-get update && apt-get -y install libpq-dev && apt-get clean
-        pytest --reruns 1 --durations=30 -n 8 --maxprocesses=8 -k 'not test_project_number_as_alphanumeric' --ignore=tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
-        pytest --reruns 1 --durations=5 -n 8 -v tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest --reruns 1 --durations=30 -n 5 --maxprocesses=8 -k 'not test_project_number_as_alphanumeric' --ignore=tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest --reruns 1 --durations=5 -n 5 -v tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
         pytest -v tests/integration/mutations/test_projects.py
       shell: bash  # Specify shell to use
       env:
