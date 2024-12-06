@@ -46,6 +46,7 @@ runs:
         pip install poetry==1.7.1
         poetry config virtualenvs.in-project true
         poetry install
+        pip install pytest-rerunfailures
       shell: bash  # Specify shell to use
 
     - name: Run Migrations
