@@ -31,22 +31,29 @@ inputs:
 runs:
   using: 'composite'
   steps:
+    - name: Create custom Docker network
+      shell: bash
+      run: |
+        docker network create my_network
+
     - name: Set up PostgreSQL container
       shell: bash
       run: |
         docker run -d \
           --name postgres \
+          --network my_network \
           -e POSTGRES_USER=${{ inputs.postgres_user }} \
           -e POSTGRES_PASSWORD=${{ inputs.postgres_password }} \
           -e POSTGRES_DB=${{ inputs.postgres_db }} \
           -p 5432:5432 \
           postgres:${{ inputs.postgres_version }}
-    
+
     - name: Set up Redis container
       shell: bash
       run: |
         docker run -d \
           --name redis \
+          --network my_network \
           -p 6379:6379 \
           redis:${{ inputs.redis_version }}
 
