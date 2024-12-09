@@ -6,7 +6,7 @@ inputs:
   repository:
     description: 'Repository to check out'
     required: true
-    default: 'main-repo'  # The main repository you want to checkout
+    default: 'main-repo'
   postgres_host:
     description: 'PostgreSQL Host'
     required: true
@@ -33,17 +33,18 @@ runs:
       uses: actions/checkout@v2
       with:
         repository: ${{ inputs.repository }}
-        ref: test007   # You can specify the branch you want to use
+        ref: test007  # Adjust branch as needed
 
     - name: Set up Python environment
       run: |
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        pip install pydantic==1.10.2  # Install Pydantic v1.x (adjust if needed)
-        pip install strawberry-graphql  # Install Strawberry
-        pip install pendulum  # Install the missing pendulum package
-        pip install sqlmodel  # Install SQLModel (missing module)
+        pip install pydantic==2.10  # Install Pydantic v2.x
+        pip install pydantic-settings  # Install the pydantic-settings package for BaseSettings
+        pip install strawberry-graphql
+        pip install pendulum
+        pip install sqlmodel
         pip install alembic pytest redis psycopg2-binary protobuf structlog \
                     SQLAlchemy celery Flask requests docker pytest-django \
                     pytest-redis faker factory_boy pytest-cov pytest-mock \
