@@ -40,10 +40,10 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        pip install alembic pytest redis psycopg2-binary protobuf structlog \
+        pip install pydantic==1.10.2 alembic pytest redis psycopg2-binary protobuf structlog \
                     SQLAlchemy celery Flask requests docker pytest-django \
                     pytest-redis faker factory_boy pytest-cov pytest-mock \
-                    black flake8 isort coverage fastapi uvicorn pydantic-settings
+                    black flake8 isort coverage fastapi uvicorn
       shell: bash  # Specify shell to use
 
     - name: Run Migrations
