@@ -40,8 +40,10 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        pip uninstall -y pydantic-settings  # Uninstall pydantic-settings if installed
-        pip install pydantic==1.10.2  # Ensure pydantic v1.x is installed
+        # Uninstall any existing versions of pydantic (including 2.x)
+        pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly
+        pip install pydantic==1.10.2 --no-deps
         pip install strawberry-graphql  # Install Strawberry
         pip install pendulum  # Install the missing pendulum package
         pip install sqlmodel  # Install SQLModel (missing module)
