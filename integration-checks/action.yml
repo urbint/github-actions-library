@@ -41,10 +41,9 @@ runs:
         . .venv/bin/activate
         python -m pip install --upgrade pip
         # Install required packages directly
-        pip install alembic pytest redis psycopg2-binary protobuf \
-                    SQLAlchemy celery Flask requests \
-                    docker pytest-django pytest-redis \
-                    faker factory_boy pytest-cov pytest-mock \
+        pip install alembic pytest redis psycopg2-binary protobuf structlog \
+                    SQLAlchemy celery Flask requests docker pytest-django \
+                    pytest-redis faker factory_boy pytest-cov pytest-mock \
                     black flake8 isort coverage
       shell: bash  # Specify shell to use
 
