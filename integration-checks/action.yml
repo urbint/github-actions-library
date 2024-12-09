@@ -43,7 +43,7 @@ runs:
         pip install pydantic==1.10.2  # Install Pydantic (adjust if needed)
         pip install strawberry-graphql  # Install Strawberry
         pip install pendulum  # Install the missing pendulum package
-        # Install other dependencies
+        pip install sqlmodel  # Install SQLModel (missing module)
         pip install alembic pytest redis psycopg2-binary protobuf structlog \
                     SQLAlchemy celery Flask requests docker pytest-django \
                     pytest-redis faker factory_boy pytest-cov pytest-mock \
