@@ -59,11 +59,19 @@ runs:
         pip freeze  # List all installed packages to check for conflicts
       shell: bash
 
+    - name: Ensure correct pydantic version
+      run: |
+        . .venv/bin/activate
+        python -c "import pydantic; print('pydantic version:', pydantic.__version__)"
+      shell: bash
+
     - name: Run Migrations
       run: |
+        # Uninstall any existing versions of pydantic (including 2.x)
         pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly again to ensure correct version
         pip install --no-cache-dir pydantic==1.10.2
-        pip freeze
+        pip freeze  # Check the installed package versions again
         . .venv/bin/activate
         alembic upgrade head
         alembic downgrade -1
