@@ -56,12 +56,18 @@ runs:
     - name: List installed packages
       run: |
         . .venv/bin/activate
+        pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly
+        pip install pydantic==1.10.2 --no-deps
         pip freeze  # List all installed packages to check for conflicts
       shell: bash
 
     - name: Ensure correct pydantic version
       run: |
         . .venv/bin/activate
+        pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly
+        pip install pydantic==1.10.2 --no-deps
         python -c "import pydantic; print('pydantic version:', pydantic.__version__)"
       shell: bash
 
@@ -69,10 +75,17 @@ runs:
       run: |
         # Uninstall any existing versions of pydantic (including 2.x)
         pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly
+        pip install pydantic==1.10.2 --no-deps
+        
         # Install pydantic 1.10.2 explicitly again to ensure correct version
         pip install --no-cache-dir pydantic==1.10.2
         pip freeze  # Check the installed package versions again
         . .venv/bin/activate
+        pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly
+        pip install pydantic==1.10.2 --no-deps
+        pip freeze
         alembic upgrade head
         alembic downgrade -1
       shell: bash  # Specify shell to use
@@ -86,6 +99,9 @@ runs:
     - name: Run Integration Tests
       run: |
         . .venv/bin/activate
+        pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly
+        pip install pydantic==1.10.2 --no-deps
         pytest --reruns 1 --durations=30 -n auto
         pytest -v tests/integration/test_example.py
       shell: bash  # Specify shell to use
@@ -100,6 +116,9 @@ runs:
     - name: Run Seed Data Generation
       run: |
         . .venv/bin/activate
+        pip uninstall -y pydantic pydantic-settings
+        # Install pydantic 1.10.2 explicitly
+        pip install pydantic==1.10.2 --no-deps
         python ./support/scripts/seed/main.py recreate-backup
         python ./support/scripts/seed/main.py restore-from-backup
       shell: bash  # Specify shell to use
