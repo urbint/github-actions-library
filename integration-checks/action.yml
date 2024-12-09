@@ -40,14 +40,11 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        # Uninstall any existing versions of pydantic (including 2.x)
-        pip uninstall -y pydantic pydantic-settings
-        # Install pydantic 1.10.2 explicitly
+        pip install sqlmodel==0.0.22  # Ensure you install the correct version of SQLModel
+        pip install sqlalchemy==2.0.14  # Ensure a compatible version of SQLAlchemy is installed
         pip install pydantic==1.10.2 --no-deps
         pip install strawberry-graphql  # Install Strawberry
         pip install pendulum  # Install the missing pendulum package
-        pip install sqlmodel  # Install SQLModel (missing module)
-        pip install sqlalchemy  # Install SQLAlchemy for PostgreSQL types (like UUID)
         pip install alembic pytest redis psycopg2-binary protobuf structlog \
                     SQLAlchemy celery Flask requests docker pytest-django \
                     pytest-redis faker factory_boy pytest-cov pytest-mock \
@@ -57,14 +54,16 @@ runs:
     - name: List installed packages
       run: |
         . .venv/bin/activate
-        pip uninstall -y pydantic pydantic-settings
-        pip install pydantic==1.10.2 --no-deps
+        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlalchemy==2.0.14  # Ensure correct version of SQLAlchemy
         pip freeze  # List all installed packages to check for conflicts
       shell: bash
 
     - name: Ensure correct pydantic version
       run: |
         . .venv/bin/activate
+        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlalchemy==2.0.14  # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
         python -c "import pydantic; print('pydantic version:', pydantic.__version__)"
@@ -72,11 +71,13 @@ runs:
 
     - name: Run Migrations
       run: |
+        . .venv/bin/activate
+        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlalchemy==2.0.14  # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
         pip install --no-cache-dir pydantic==1.10.2
         pip freeze  # Check the installed package versions again
-        . .venv/bin/activate
         alembic upgrade head
         alembic downgrade -1
       shell: bash  # Specify shell to use
@@ -90,6 +91,8 @@ runs:
     - name: Run Integration Tests
       run: |
         . .venv/bin/activate
+        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlalchemy==2.0.14  # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
         pytest --reruns 1 --durations=30 -n auto
@@ -106,6 +109,8 @@ runs:
     - name: Run Seed Data Generation
       run: |
         . .venv/bin/activate
+        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlalchemy==2.0.14  # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
         python ./support/scripts/seed/main.py recreate-backup
