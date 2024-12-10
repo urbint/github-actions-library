@@ -8,7 +8,7 @@ inputs:
     required: true
     default: 'main-repo'
   postgres_host:
-    description: 'PostgreSQL Host'
+    description: 'PostgreSQL Host' 
     required: true
   postgres_user:
     description: 'PostgreSQL User'
@@ -45,6 +45,7 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
+        pip install --upgrade typing-extensions  # Ensure compatibility with FastAPI
         pip install \
           alembic==1.13.1 \
           sqlalchemy==2.0.19 \
