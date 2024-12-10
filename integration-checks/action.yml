@@ -42,6 +42,7 @@ runs:
         python -m pip install --upgrade pip
         pip install --upgrade numpy  # Ensure numpy is upgraded
         pip install \
+          async_timeout \  # Install async_timeout
           mmh3 \
           sqlmodel==0.0.11 \
           sqlalchemy==1.4.36 \
