@@ -1,6 +1,6 @@
-name: "Run Integration Checks"
+name: "Run Integration Checks and Migrations"
 
-description: "Run integration checks including migrations, integration tests, and seed data tests"
+description: "Run integration checks, including database migrations, integration tests, and seed data tests."
 
 inputs:
   repository:
@@ -69,7 +69,8 @@ runs:
           coverage \
           fastapi \
           uvicorn \
-          mako
+          mako \
+          markupsafe  # ✅ Added markupsafe here
       shell: bash
 
     - name: List installed packages
