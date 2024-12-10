@@ -45,6 +45,8 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
+        pip uninstall -y typing-extensions
+        pip install typing-extensions==4.6.0
         pip install \
           alembic==1.13.1 \
           sqlalchemy==2.0.19 \
@@ -98,6 +100,7 @@ runs:
           autohooks-plugin-isort==23.10.0 \
           autohooks-plugin-flake8==23.10.0 \
           types-pytz==2024.1.0.20240417 \
+          typing-extensions==4.6.0 \
           typing-extensions==4.5.0 \
           mako==1.2.4 \
           markupsafe==2.1.3 \
