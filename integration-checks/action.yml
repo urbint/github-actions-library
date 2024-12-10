@@ -1,4 +1,4 @@
-name: "Integration Checks"
+name: "Run Integration Checks"
 
 description: "Run integration checks including migrations, integration tests, and seed data tests"
 
@@ -6,7 +6,7 @@ inputs:
   repository:
     description: 'Repository to check out'
     required: true
-    default: 'main-repo'  # The main repository you want to checkout
+    default: 'main-repo'
   postgres_host:
     description: 'PostgreSQL Host'
     required: true
@@ -33,54 +33,55 @@ runs:
       uses: actions/checkout@v2
       with:
         repository: ${{ inputs.repository }}
-        ref: test007   # You can specify the branch you want to use
+        ref: test007
 
     - name: Set up Python environment
       run: |
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        pip install sqlmodel==0.0.11  # Ensure you install the correct version of SQLModel
-        pip install sqlalchemy==1.4.0  # Ensure a compatible version of SQLAlchemy is installed
-        pip install pydantic==1.10.2 --no-deps
-        pip install strawberry-graphql  # Install Strawberry
-        pip install pendulum  # Install the missing pendulum package
-        pip install alembic pytest redis psycopg2-binary protobuf structlog \
-                    SQLAlchemy celery Flask requests docker pytest-django \
-                    pytest-redis faker factory_boy pytest-cov pytest-mock \
-                    black flake8 isort coverage fastapi uvicorn
-      shell: bash  # Specify shell to use
+        pip install \
+          sqlmodel==0.0.11 \
+          sqlalchemy==1.4.36 \
+          pydantic==1.10.2 --no-deps \
+          strawberry-graphql \
+          pendulum \
+          alembic \
+          pytest \
+          redis \
+          psycopg2-binary \
+          protobuf \
+          structlog \
+          celery \
+          Flask \
+          requests \
+          docker \
+          pytest-django \
+          pytest-redis \
+          faker \
+          factory_boy \
+          pytest-cov \
+          pytest-mock \
+          black \
+          flake8 \
+          isort \
+          coverage \
+          fastapi \
+          uvicorn
+      shell: bash
 
     - name: List installed packages
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
-        pip install sqlalchemy==1.3.24  # Ensure correct version of SQLAlchemy
-        pip freeze  # List all installed packages to check for conflicts
-      shell: bash
-
-    - name: Ensure correct pydantic version
-      run: |
-        . .venv/bin/activate
-        pip install sqlmodel==0.0.11  # Ensure correct version of SQLModel
-        pip install sqlalchemy==1.4.0  # Ensure correct version of SQLAlchemy
-        pip uninstall -y pydantic pydantic-settings
-        pip install pydantic==1.10.2 --no-deps
-        python -c "import pydantic; print('pydantic version:', pydantic.__version__)"
+        pip freeze
       shell: bash
 
     - name: Run Migrations
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.11  # Ensure correct version of SQLModel
-        pip install sqlalchemy==1.4.0 # Ensure correct version of SQLAlchemy
-        pip uninstall -y pydantic pydantic-settings
-        pip install pydantic==1.10.2 --no-deps
-        pip install --no-cache-dir pydantic==1.10.2
-        pip freeze  # Check the installed package versions again
         alembic upgrade head
         alembic downgrade -1
-      shell: bash  # Specify shell to use
+      shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
@@ -91,13 +92,9 @@ runs:
     - name: Run Integration Tests
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.11 # Ensure correct version of SQLModel
-        pip install sqlalchemy==1.4.0 # Ensure correct version of SQLAlchemy
-        pip uninstall -y pydantic pydantic-settings
-        pip install pydantic==1.10.2 --no-deps
         pytest --reruns 1 --durations=30 -n auto
         pytest -v tests/integration/test_example.py
-      shell: bash  # Specify shell to use
+      shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
@@ -109,13 +106,9 @@ runs:
     - name: Run Seed Data Generation
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.11  # Ensure correct version of SQLModel
-        pip install sqlalchemy==1.4.0  # Ensure correct version of SQLAlchemy
-        pip uninstall -y pydantic pydantic-settings
-        pip install pydantic==1.10.2 --no-deps
         python ./support/scripts/seed/main.py recreate-backup
         python ./support/scripts/seed/main.py restore-from-backup
-      shell: bash  # Specify shell to use
+      shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
