@@ -73,7 +73,28 @@ runs:
           markupsafe \
           tomli \
           pytest-xdist \
-          werkzeug  # Added werkzeug for Flask
+          werkzeug \
+          starlette \
+          jinja2 \
+          httpx \
+          aiohttp \
+          mypy \
+          pytest-factoryboy \
+          python-dotenv \
+          asyncpg \
+          aiofiles \
+          requests \
+          pydantic[email] \
+          gitpython \
+          httptools \
+          databases \
+          websockets \
+          alembic \
+          sqlparse \
+          email-validator \
+          sqlalchemy-utils \
+          sentry-sdk \
+          httpcore
       shell: bash
 
     - name: List installed packages
