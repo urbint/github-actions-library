@@ -95,7 +95,21 @@ runs:
           sqlalchemy-utils \
           sentry-sdk \
           httpcore \
-          anyio  # Added anyio
+          anyio \
+          sniffio \
+          sqlalchemy-continuum \
+          graphql-core \
+          jsonschema \
+          pyjwt \
+          celery[redis] \
+          boto3 \
+          pyyaml \
+          python-multipart \
+          pyodbc \
+          opentelemetry-api \
+          opentelemetry-sdk \
+          opentelemetry-instrumentation \
+          opentelemetry-exporter-jaeger
       shell: bash
 
     - name: List installed packages
