@@ -45,12 +45,10 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        pip install --upgrade typing-extensions  # Ensure compatibility with FastAPI
         pip install \
           alembic==1.13.1 \
           sqlalchemy==2.0.19 \
           ddtrace==2.8.5 \
-          dependency-injector==4.41.0 \
           fastapi==0.105.0 \
           google-cloud-storage==2.15.0 \
           openpyxl==3.1.2 \
