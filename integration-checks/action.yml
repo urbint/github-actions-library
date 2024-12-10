@@ -1,6 +1,6 @@
-name: "Run Integration Checks and Migrations"
+name: Run Integration Checks
 
-description: "Run integration checks, including database migrations, integration tests, and seed data tests."
+description: "Run integration checks including migrations, integration tests, and seed data tests"
 
 inputs:
   repository:
@@ -94,7 +94,8 @@ runs:
           email-validator \
           sqlalchemy-utils \
           sentry-sdk \
-          httpcore
+          httpcore \
+          anyio  # Added anyio
       shell: bash
 
     - name: List installed packages
