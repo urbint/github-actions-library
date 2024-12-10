@@ -46,7 +46,7 @@ runs:
         . .venv/bin/activate
         python -m pip install --upgrade pip
         pip uninstall -y typing-extensions  # Remove conflicting versions if any
-        pip install typing-extensions==4.5.0  # Only install one version
+        pip install typing-extensions==4.7.1  # Only install one version
         pip install \
           alembic==1.13.1 \
           sqlalchemy==2.0.19 \
