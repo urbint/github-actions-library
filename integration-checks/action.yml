@@ -68,7 +68,8 @@ runs:
           isort \
           coverage \
           fastapi \
-          uvicorn
+          uvicorn \
+          mako
       shell: bash
 
     - name: List installed packages
