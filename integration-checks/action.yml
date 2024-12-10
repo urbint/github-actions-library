@@ -40,6 +40,7 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
+        pip install --upgrade numpy  # Ensure numpy is upgraded
         pip install \
           mmh3 \
           sqlmodel==0.0.11 \
