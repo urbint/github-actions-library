@@ -38,16 +38,16 @@ runs:
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: '3.10'  # Make sure to use a valid Python version here
+        python-version: '3.10'
 
     - name: Install dependencies
       run: |
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        echo "Installing dependencies..."
         pip install \
           alembic==1.13.1 \
+          sqlalchemy==2.0.19 \
           ddtrace==2.8.5 \
           dependency-injector==4.41.0 \
           fastapi==0.105.0 \
