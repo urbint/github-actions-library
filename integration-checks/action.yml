@@ -109,7 +109,8 @@ runs:
           opentelemetry-api \
           opentelemetry-sdk \
           opentelemetry-instrumentation \
-          opentelemetry-exporter-jaeger
+          opentelemetry-exporter-jaeger \
+          exceptiongroup
       shell: bash
 
     - name: List installed packages
