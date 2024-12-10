@@ -40,8 +40,8 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        pip install numpy --upgrade  # Ensure numpy is installed and up-to-date
         pip install \
+          mmh3 \  # Add mmh3 to the dependencies
           sqlmodel==0.0.11 \
           sqlalchemy==1.4.36 \
           pydantic==1.10.2 --no-deps \
@@ -114,7 +114,7 @@ runs:
           exceptiongroup \
           python-dateutil \
           six \
-          shapely  # Ensured shapely is included after numpy
+          shapely  # Ensure shapely is included after numpy
       shell: bash
 
     - name: List installed packages
