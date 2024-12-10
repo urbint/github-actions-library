@@ -70,7 +70,10 @@ runs:
           fastapi \
           uvicorn \
           mako \
-          markupsafe  # ✅ Added markupsafe here
+          markupsafe \
+          tomli \
+          pytest-xdist \
+          werkzeug  # Added werkzeug for Flask
       shell: bash
 
     - name: List installed packages
