@@ -40,7 +40,7 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
-        pip install sqlmodel==0.0.22  # Ensure you install the correct version of SQLModel
+        pip install sqlmodel==0.0.11  # Ensure you install the correct version of SQLModel
         pip install sqlalchemy==1.4.0  # Ensure a compatible version of SQLAlchemy is installed
         pip install pydantic==1.10.2 --no-deps
         pip install strawberry-graphql  # Install Strawberry
@@ -62,7 +62,7 @@ runs:
     - name: Ensure correct pydantic version
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlmodel==0.0.11  # Ensure correct version of SQLModel
         pip install sqlalchemy==1.4.0  # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
@@ -72,7 +72,7 @@ runs:
     - name: Run Migrations
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlmodel==0.0.11  # Ensure correct version of SQLModel
         pip install sqlalchemy==1.4.0 # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
@@ -91,7 +91,7 @@ runs:
     - name: Run Integration Tests
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlmodel==0.0.11 # Ensure correct version of SQLModel
         pip install sqlalchemy==1.4.0 # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
@@ -109,7 +109,7 @@ runs:
     - name: Run Seed Data Generation
       run: |
         . .venv/bin/activate
-        pip install sqlmodel==0.0.22  # Ensure correct version of SQLModel
+        pip install sqlmodel==0.0.11  # Ensure correct version of SQLModel
         pip install sqlalchemy==1.4.0  # Ensure correct version of SQLAlchemy
         pip uninstall -y pydantic pydantic-settings
         pip install pydantic==1.10.2 --no-deps
