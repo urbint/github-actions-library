@@ -112,8 +112,8 @@ runs:
           opentelemetry-exporter-jaeger \
           exceptiongroup \
           python-dateutil \
-          six \ 
-          shapely  # Added shapely module
+          six \
+          shapely  # Fixed syntax error here
       shell: bash
 
     - name: List installed packages
