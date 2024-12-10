@@ -112,7 +112,7 @@ runs:
           opentelemetry-exporter-jaeger \
           exceptiongroup \
           python-dateutil \
-          six \ # Added missing 'six' module
+          six \ 
           shapely  # Added shapely module
       shell: bash
 
