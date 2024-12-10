@@ -111,7 +111,8 @@ runs:
           opentelemetry-instrumentation \
           opentelemetry-exporter-jaeger \
           exceptiongroup \
-          python-dateutil  # Added missing package
+          python-dateutil \
+          six  # Added missing 'six' module
       shell: bash
 
     - name: List installed packages
