@@ -40,6 +40,7 @@ runs:
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
+        pip install numpy --upgrade  # Ensure numpy is installed and up-to-date
         pip install \
           sqlmodel==0.0.11 \
           sqlalchemy==1.4.36 \
@@ -113,7 +114,7 @@ runs:
           exceptiongroup \
           python-dateutil \
           six \
-          shapely  # Fixed syntax error here
+          shapely  # Ensured shapely is included after numpy
       shell: bash
 
     - name: List installed packages
