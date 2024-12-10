@@ -38,13 +38,14 @@ runs:
     - name: Set up Python 3.10
       uses: actions/setup-python@v2
       with:
-        python-version: '3.10'  # Ensure to use a valid Python version here
+        python-version: '3.10'  # Make sure to use a valid Python version here
 
     - name: Install dependencies
       run: |
         python -m venv .venv
         . .venv/bin/activate
         python -m pip install --upgrade pip
+        echo "Installing dependencies..."
         pip install \
           alembic==1.13.1 \
           ddtrace==2.8.5 \
@@ -57,7 +58,6 @@ runs:
           greenlet==3.0.1 \
           pydantic==1.10.13 \
           PyJWT[crypto]==2.8.0 \
-          sqlalchemy==2.0.0 \  # Add sqlalchemy here
           sqlalchemy2-stubs==0.0.2a38 \
           sqlmodel==0.0.11 \
           strawberry-graphql[fastapi]==0.219.2 \
