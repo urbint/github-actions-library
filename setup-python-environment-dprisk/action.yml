@@ -1,5 +1,5 @@
 name: "Setup Python Environment"
-description: "Sets up Python, installs Poetry, system dependencies, and project dependencies"
+description: "Sets up Python, installs Poetry, system dependencies, and project dependencies from another repository"
 
 inputs:
   python-version:
@@ -14,17 +14,19 @@ inputs:
   repo-directory:
     description: "The directory where the repository will be checked out"
     required: true
-    default: "."
-  uvloop-version:
-    description: "Version of uvloop to install if necessary"
-    required: false
-    default: "0.17.0"
+    default: "project-repo"
 
 runs:
   using: "composite"
   steps:
     - name: Checkout current repository
       uses: actions/checkout@v4
+
+    - name: Checkout the repository containing pyproject.toml
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo-path }}
+        path: ${{ inputs.repo-directory }}
 
     - name: Set up Python
       uses: actions/setup-python@v5
@@ -52,8 +54,13 @@ runs:
       shell: bash
 
     - name: Install Poetry with pipx
+      run: pipx install poetry==${{ inputs.poetry-version }}
+      continue-on-error: true
+      shell: bash
+
+    - name: Install uvloop manually (if necessary)
       run: |
-        pipx install poetry==${{ inputs.poetry-version }}
+        pip install --no-cache-dir --use-pep517 uvloop==0.17.0  # Replace with the desired version
       continue-on-error: true
       shell: bash
 
@@ -61,17 +68,4 @@ runs:
       run: |
         cd ${{ inputs.repo-directory }}  # Move into the directory where pyproject.toml is
         poetry install
-      shell: bash
-
-    - name: Install uvloop manually (if necessary)
-      run: |
-        pip install --no-cache-dir --use-pep517 uvloop==${{ inputs.uvloop-version }}
-      continue-on-error: true
-      shell: bash
-
-    - name: Install project dependencies using Poetry (if uvloop was installed manually)
-      run: |
-        cd ${{ inputs.repo-directory }}  # Move into the directory where pyproject.toml is
-        poetry install
-      continue-on-error: true
       shell: bash
