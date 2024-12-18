@@ -1,5 +1,5 @@
 name: "Setup Python Environment"
-description: "Sets up Python, installs Poetry, and project dependencies"
+description: "Sets up Python, installs Poetry, system dependencies, and project dependencies"
 
 inputs:
   python-version:
@@ -23,6 +23,13 @@ runs:
     - name: Upgrade pip and setuptools
       run: |
         python -m pip install --upgrade pip setuptools
+      shell: bash
+
+    - name: Install system dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential libpq-dev gcc brotli libgeos-dev proj-bin libsnappy-dev
+        sudo apt-get clean
       shell: bash
 
     - name: Install pipx
