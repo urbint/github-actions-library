@@ -45,12 +45,6 @@ runs:
       continue-on-error: true
       shell: bash
 
-    - name: Install uvloop manually (if necessary)
-      run: |
-        pip install --no-cache-dir --use-pep517 uvloop==0.17.0  # Replace with the desired version
-      continue-on-error: true
-      shell: bash
-
     - name: Install dependencies using Poetry (from pyproject.toml)
       run: |
         poetry install
