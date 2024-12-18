@@ -1,5 +1,5 @@
 name: "Setup Python Environment"
-description: "Sets up Python, installs Poetry, system dependencies, and project dependencies"
+description: "Sets up Python, installs Poetry, system dependencies, and project dependencies from another repository"
 
 inputs:
   python-version:
@@ -8,14 +8,27 @@ inputs:
   poetry-version:
     description: "The version of Poetry to install"
     required: true
+  repo-path:
+    description: "The repository containing pyproject.toml (path or repo name)"
+    required: true
+  repo-directory:
+    description: "The directory where the repository will be checked out"
+    required: true
+    default: "project-repo"
 
 runs:
   using: "composite"
   steps:
-    - name: Checkout repository
+    - name: Checkout current repository
       uses: actions/checkout@v4
 
-    - name: Setup Python
+    - name: Checkout the repository containing pyproject.toml
+      uses: actions/checkout@v4
+      with:
+        repository: ${{ inputs.repo-path }}
+        path: ${{ inputs.repo-directory }}
+
+    - name: Set up Python
       uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
@@ -45,10 +58,10 @@ runs:
       continue-on-error: true
       shell: bash
 
-    - name: Install dependencies using Poetry
+    - name: Install dependencies using Poetry (from pyproject.toml)
       run: |
+        cd ${{ inputs.repo-directory }}  # Move into the directory where pyproject.toml is
         poetry install
-      continue-on-error: true
       shell: bash
 
     - name: Install uvloop manually (if necessary)
@@ -59,6 +72,7 @@ runs:
 
     - name: Install project dependencies using Poetry (if uvloop was installed manually)
       run: |
+        cd ${{ inputs.repo-directory }}  # Move into the directory where pyproject.toml is
         poetry install
       continue-on-error: true
       shell: bash
