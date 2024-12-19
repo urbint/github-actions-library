@@ -6,7 +6,7 @@ inputs:
   repository:
     description: 'Repository to check out'
     required: true
-    default: 'main-repo'  # The main repository you want to checkout
+    default: 'main-repo'
   postgres_host:
     description: 'PostgreSQL Host'
     required: true
@@ -32,13 +32,15 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Check out repository
+    # Check out the main repository
+    - name: "Check out repository"
       uses: actions/checkout@v2
       with:
         repository: ${{ inputs.repository }}
-        ref: ${{ inputs.branch_name }}   # You can specify the branch you want to use
+        ref: ${{ inputs.branch_name }}
 
-    - name: Set up Python environment
+    # Set up Python environment and install dependencies
+    - name: "Set up Python environment"
       run: |
         python -m venv .venv
         . .venv/bin/activate
@@ -47,14 +49,15 @@ runs:
         poetry config virtualenvs.in-project true
         poetry install
         pip install pytest-rerunfailures
-      shell: bash  # Specify shell to use
+      shell: bash
 
-    - name: Run Migrations
+    # Run Migrations
+    - name: "Run Migrations"
       run: |
         . .venv/bin/activate
         alembic upgrade head
         alembic downgrade -1
-      shell: bash  # Specify shell to use
+      shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
@@ -62,14 +65,15 @@ runs:
         POSTGRES_DB: ${{ inputs.postgres_db }}
         REDIS_HOST: ${{ inputs.redis_host }}
 
-    - name: Run Integration Tests
+    # Run Integration Tests
+    - name: "Run Integration Tests"
       run: |
         sudo apt-get update && sudo apt-get -y install libpq-dev && sudo apt-get clean
         . .venv/bin/activate
-        pytest --reruns 5 --reruns-delay 2 --durations=30 -n 5 --maxprocesses=8 -k 'not test_project_number_as_alphanumeric' --ignore=tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
-        pytest ---reruns 5 --reruns-delay 2 -n 5 -v tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest --reruns 1 --durations=30 -n auto --maxprocesses=8 -k 'not test_project_number_as_alphanumeric' --ignore=tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest --reruns 1 --durations=5 -v tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
         pytest -v tests/integration/mutations/test_projects.py
-      shell: bash  # Specify shell to use
+      shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
@@ -78,12 +82,18 @@ runs:
         REDIS_HOST: ${{ inputs.redis_host }}
         PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: ${{ inputs.protocol_buffers_python_implementation }}
 
-    - name: Run Seed Data Generation
+    # Run Seed Data Generation, Backup, and Restoration
+    - name: "Test Seed Data Generation, Backup, and Restoration"
       run: |
+        apt-get update
+        apt-get install -y postgresql-common gnupg
+        sh /usr/share/postgresql-common/pgdg/apt.postgresql.org.sh -y
+        apt-get update
+        apt-get install -y postgresql-client-13
         . .venv/bin/activate
         python ./support/scripts/seed/main.py recreate-backup
         python ./support/scripts/seed/main.py restore-from-backup
-      shell: bash  # Specify shell to use
+      shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
