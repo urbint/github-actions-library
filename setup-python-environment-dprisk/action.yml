@@ -1,57 +1,78 @@
-name: "Setup Python Environment"
-description: "Sets up Python, installs Poetry, system dependencies, and project dependencies from the current repository"
-
+name: "Setup and Checks"
+description: "Set up environment, install dependencies, and run checks (black, flake8, isort, mypy)"
 inputs:
   python-version:
-    description: "The version of Python to use"
+    description: "Python version"
     required: true
-  poetry-version:
-    description: "The version of Poetry to install"
+    default: "3.10"
+  check-types:
+    description: "Comma-separated list of checks to run (e.g., black, flake8)"
     required: true
-
+  postgres-user:
+    description: "Postgres user"
+    required: true
+    default: "world_data"
+  postgres-password:
+    description: "Postgres password"
+    required: true
+    default: "world_data"
+  postgres-db:
+    description: "Postgres database name"
+    required: true
+    default: "world_data"
 runs:
   using: "composite"
   steps:
-    - name: Checkout the current repository
-      uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Set up Python
-      uses: actions/setup-python@v5
+      uses: actions/setup-python@v4
       with:
         python-version: ${{ inputs.python-version }}
 
-    - name: Upgrade pip and setuptools
-      run: |
-        python -m pip install --upgrade pip setuptools
-      shell: bash
-
     - name: Install system dependencies
+      shell: bash
       run: |
         sudo apt-get update
-        sudo apt-get install -y build-essential libpq-dev gcc brotli libgeos-dev proj-bin libsnappy-dev python3-dev
+        sudo apt-get install -y build-essential libpq-dev gcc brotli libgeos-dev proj-bin libsnappy-dev
         sudo apt-get clean
-      shell: bash
 
-    - name: Install pipx
+    - name: Install Poetry
+      shell: bash
       run: |
-        python -m pip install --upgrade pip
-        python -m pip install pipx
-        python -m pipx ensurepath
-      continue-on-error: true
-      shell: bash
+        curl -sSL https://install.python-poetry.org | python3 -
+        echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Install Poetry with pipx
-      run: pipx install poetry==${{ inputs.poetry-version }}
-      continue-on-error: true
+    - name: Configure Poetry
       shell: bash
-
-    - name: Install uvloop manually (using pip with --no-use-pep517)
       run: |
-        pip install --no-cache-dir --no-use-pep517 uvloop==0.16.0
-      continue-on-error: true
-      shell: bash
+        poetry config virtualenvs.in-project true
 
-    - name: Install dependencies using Poetry (from pyproject.toml)
-      run: |
-        poetry install
+    - name: Install dependencies with Poetry
       shell: bash
+      run: |
+        poetry install --no-root
+
+    - name: Set up services (PostgreSQL & Redis)
+      shell: bash
+      run: |
+        echo "Setting up PostgreSQL and Redis services"
+      # No need to actually start services here, as they will be defined in the main workflow
+
+    - name: Run checks
+      shell: bash
+      run: |
+        . .venv/bin/activate
+        IFS=',' read -r -a checks <<< "${{ inputs.check-types }}"
+        for check in "${checks[@]}"; do
+          if [ "$check" == "black" ]; then
+            poetry run black --check .
+          elif [ "$check" == "flake8" ]; then
+            poetry run flake8 .
+          elif [ "$check" == "isort" ]; then
+            poetry run isort --check .
+          elif [ "$check" == "mypy" ]; then
+            poetry run mypy world_data tests
+          fi
+        done
