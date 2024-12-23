@@ -29,7 +29,7 @@ runs:
   env:
     MONGODB_HOST: ${{ inputs.mongodb_host }}
     MONGODB_USER: ${{ inputs.mongodb_user }}  # Use secrets for password
-    MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
+    MONGODB_PASSWORD: ${{ inputs.mongodb_password }}
     MONGODB_DB: ${{ inputs.mongodb_db }}
     APP_ENV: ${{ inputs.app_env }}  # Use provided value or default to empty
   entrypoint: "/bin/bash"
