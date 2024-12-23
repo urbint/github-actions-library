@@ -32,14 +32,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    
+    # Step 1: Check out the main repository
     - name: "Check out repository"
       uses: actions/checkout@v2
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.branch_name }}
 
-    
+    # Step 2: Set up Python environment and install dependencies
     - name: "Set up Python environment"
       run: |
         python -m venv .venv
@@ -51,7 +51,7 @@ runs:
         pip install pytest-rerunfailures
       shell: bash
 
-    # Run Migrations
+    # Step 3: Run Migrations
     - name: "Run Migrations"
       run: |
         . .venv/bin/activate
@@ -62,27 +62,27 @@ runs:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
         POSTGRES_PASS: ${{ inputs.postgres_pass }}
-        POSTGRES_DB: ${{ inputs.postgres_db }}
+        POSTGRES_DB: ${{ inputs.postgres_db }}  # Use original DB name for migrations
         REDIS_HOST: ${{ inputs.redis_host }}
 
-    # Run Integration Tests
+    # Step 4: Run Integration Tests
     - name: "Run Integration Tests"
       run: |
         sudo apt-get update && sudo apt-get -y install libpq-dev && sudo apt-get clean
         . .venv/bin/activate
-        pytest --reruns 1 --durations=30 -n auto --maxprocesses=8 -k 'not test_project_number_as_alphanumeric' --ignore=tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
-        pytest --reruns 1 --durations=5 -v tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
-        pytest -v tests/integration/mutations/test_projects.py
+        pytest --reruns 3 --reruns-delay 2 -n 6 --maxprocesses=8 -k 'not test_project_number_as_alphanumeric' --ignore=tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest --reruns 3 --reruns-delay 2 -n 6 -v tests/integration/risk_model/explain_functions/test_explain_methods_no_exception.py
+        pytest --reruns 3 --reruns-delay 2 -n 6 -v tests/integration/mutations/test_projects.py
       shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
         POSTGRES_PASS: ${{ inputs.postgres_pass }}
-        POSTGRES_DB: ${{ inputs.postgres_db }}
+        POSTGRES_DB: ${{ inputs.postgres_db }}_test  # Ensure the DB name ends with '_test'
         REDIS_HOST: ${{ inputs.redis_host }}
         PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: ${{ inputs.protocol_buffers_python_implementation }}
 
-    # Run Seed Data Generation, Backup, and Restoration
+    # Step 5: Run Seed Data Generation, Backup, and Restoration
     - name: "Test Seed Data Generation, Backup, and Restoration"
       run: |
         apt-get update
@@ -91,8 +91,7 @@ runs:
         apt-get update
         apt-get install -y postgresql-client-13
         . .venv/bin/activate
-        
-        # Ensure that async code is handled with asyncio.run()
+        # Ensure async code is properly handled with asyncio.run()
         python -m asyncio run python ./support/scripts/seed/main.py recreate-backup
         python -m asyncio run python ./support/scripts/seed/main.py restore-from-backup
       shell: bash
@@ -100,6 +99,6 @@ runs:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
         POSTGRES_PASS: ${{ inputs.postgres_pass }}
-        POSTGRES_DB: ${{ inputs.postgres_db }}
+        POSTGRES_DB: ${{ inputs.postgres_db }}_seed_creation  # You can adjust this if needed
         REDIS_HOST: ${{ inputs.redis_host }}
         PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: ${{ inputs.protocol_buffers_python_implementation }}
