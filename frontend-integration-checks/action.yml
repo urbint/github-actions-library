@@ -77,7 +77,8 @@ runs:
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
-        POSTGRES_PASS: ${{ inputs.postgres_pass }}
+        POSTGRES_PASS: ${{ inputs.postgres_db }}_test
+        POSTGRES_DISABLE_JIT: true
         POSTGRES_DB: ${{ inputs.postgres_db }}
         REDIS_HOST: ${{ inputs.redis_host }}
         PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: ${{ inputs.protocol_buffers_python_implementation }}
@@ -98,6 +99,7 @@ runs:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
         POSTGRES_USER: ${{ inputs.postgres_user }}
         POSTGRES_PASS: ${{ inputs.postgres_pass }}
-        POSTGRES_DB: ${{ inputs.postgres_db }}
+        POSTGRES_PASS: ${{ inputs.postgres_db }}_seed_creation
+        POSTGRES_DISABLE_JIT: true
         REDIS_HOST: ${{ inputs.redis_host }}
         PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION: ${{ inputs.protocol_buffers_python_implementation }}
