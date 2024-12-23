@@ -44,14 +44,13 @@ runs:
         python -m pip install --upgrade pip
         pip uninstall -y typing-extensions  # Remove conflicting versions if any
         pip install typing-extensions==4.7.1  # Only install one version
-        pip install \       
+        pip install --no-deps \
           dnspython==2.4.2 \
           mongoengine==0.27.0 \
           motor==3.1.1 \
           pytest==7.4.3 \
           pytest-asyncio==0.23.5 \
-          pytest-rerunfailures==14.0 \
-          --no-deps
+          pytest-rerunfailures==14.0
       shell: bash
 
     - name: List installed packages
