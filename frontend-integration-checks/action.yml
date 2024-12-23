@@ -32,14 +32,14 @@ inputs:
 runs:
   using: "composite"
   steps:
-    # Check out the main repository
+    
     - name: "Check out repository"
       uses: actions/checkout@v2
       with:
         repository: ${{ inputs.repository }}
         ref: ${{ inputs.branch_name }}
 
-    # Set up Python environment and install dependencies
+    
     - name: "Set up Python environment"
       run: |
         python -m venv .venv
@@ -91,8 +91,10 @@ runs:
         apt-get update
         apt-get install -y postgresql-client-13
         . .venv/bin/activate
-        python ./support/scripts/seed/main.py recreate-backup
-        python ./support/scripts/seed/main.py restore-from-backup
+        
+        # Ensure that async code is handled with asyncio.run()
+        python -m asyncio run python ./support/scripts/seed/main.py recreate-backup
+        python -m asyncio run python ./support/scripts/seed/main.py restore-from-backup
       shell: bash
       env:
         POSTGRES_HOST: ${{ inputs.postgres_host }}
