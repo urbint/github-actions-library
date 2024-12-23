@@ -19,16 +19,19 @@ inputs:
   migration_image_tag:
     description: 'Migration Docker image tag'
     required: true
+  app_env:
+    description: 'Application environment (optional)'
+    required: false
 
 runs:
   using: 'docker'
   image: 'gcr.io/urbint-1259/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}'
   env:
     MONGODB_HOST: ${{ inputs.mongodb_host }}
-    MONGODB_USER: ${{ inputs.mongodb_user }}
-    MONGODB_PASSWORD: ${{ inputs.mongodb_password }}
+    MONGODB_USER: ${{ inputs.mongodb_user }}  # Use secrets for password
+    MONGODB_PASSWORD: ${{ secrets.MONGODB_PASSWORD }}
     MONGODB_DB: ${{ inputs.mongodb_db }}
-    APP_ENV: prod
+    APP_ENV: ${{ inputs.app_env }}  # Use provided value or default to empty
   entrypoint: "/bin/bash"
   args:
     - "-c"
