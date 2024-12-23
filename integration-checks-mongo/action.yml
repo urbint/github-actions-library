@@ -44,8 +44,7 @@ runs:
         python -m pip install --upgrade pip
         pip uninstall -y typing-extensions  # Remove conflicting versions if any
         pip install typing-extensions==4.7.1  # Only install one version
-        pip install \
-          
+        pip install \       
           dnspython==2.4.2 \
           mongoengine==0.27.0 \
           motor==3.1.1 \
