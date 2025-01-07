@@ -21,15 +21,15 @@ inputs:
     required: true
 
 runs:
-  using: 'docker'
-  image: "gcr.io/urbint-1259/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}"
-  env:
-    POSTGRES_HOST: ${{ inputs.postgres_host }}
-    POSTGRES_USER: ${{ inputs.postgres_user }}
-    POSTGRES_PASSWORD: ${{ inputs.postgres_password }}
-    POSTGRES_DB: ${{ inputs.postgres_db }}
-    APP_ENV: integ
-  entrypoint: "/bin/bash"
-  args:
-    - "-c"
-    - "alembic upgrade head"
+  using: 'composite'
+  steps:
+    - name: Run Migration Docker
+      
+      run: |
+        docker run --rm \
+          -e POSTGRES_HOST=${{ inputs.postgres_host }} \
+          -e POSTGRES_USER=${{ inputs.postgres_user }} \
+          -e POSTGRES_PASSWORD=${{ inputs.postgres_password }} \
+          -e POSTGRES_DB=${{ inputs.postgres_db }} \
+          gcr.io/urbint-1259/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }} /bin/bash -c "alembic upgrade head"
+      shell: bash  
