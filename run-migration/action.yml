@@ -48,6 +48,6 @@ runs:
           -e POSTGRES_USER=${{ inputs.postgres_user }} \
           -e POSTGRES_PASSWORD=${{ inputs.postgres_password }} \
           -e POSTGRES_DB=${{ inputs.postgres_db }} \
-          --entrypoint /bin/bash
+          --entrypoint /bin/bash \
           gcr.io/urbint-1259/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}  alembic upgrade head
       shell: bash  
