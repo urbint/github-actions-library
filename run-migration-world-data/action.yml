@@ -65,6 +65,6 @@ runs:
           -e HERE_ACCESS_SECRET=${{ inputs.here_access_secret }} \
           -e DARKSKY_API_KEY=${{ inputs.darksky_api_key }} \
           -w /app \
-          gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.image_tag }} \
+          gcr.io/urbint-1259/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }} \
           world-data migrations upgrade head
       shell: bash
