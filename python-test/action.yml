@@ -8,6 +8,10 @@ inputs:
   poetry-version:
     description: "The version of Poetry to install"
     required: true
+  continue-on-error:
+    description: "Continue on error"
+    required: false
+    default: false
 
 runs:
   using: "composite"
@@ -46,5 +50,5 @@ runs:
 
     - name: Run Test
       run: poetry run pytest
-      continue-on-error: true
+      continue-on-error: ${{ inputs.continue-on-error }}
       shell: bash
