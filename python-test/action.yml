@@ -11,7 +11,7 @@ inputs:
   continue-on-error:
     description: "Continue on error"
     required: false
-    default: true
+    default: "true"
 
 runs:
   using: "composite"
