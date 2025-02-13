@@ -9,6 +9,7 @@ inputs:
     description: "The version of Poetry to install"
     required: true
   continue-on-error:
+    type: boolean
     description: "Continue on error"
     required: false
     default: "true"
