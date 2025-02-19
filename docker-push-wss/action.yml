@@ -49,7 +49,7 @@ runs:
         context: .
         file: ${{ inputs.dockerfile }}
         push: true
-        tags: gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}
+        tags: gcr.io/urbint-terraform/${{ inputs.image_name }}:${{ inputs.tag }}
 
     - name: Build and Push Docker Image (With Target)
       if: ${{ inputs.target }}
@@ -58,5 +58,5 @@ runs:
         context: .
         file: ${{ inputs.dockerfile }}
         push: true
-        tags: gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}
+        tags: gcr.io/urbint-terraform/${{ inputs.image_name }}:${{ inputs.tag }}
         target: ${{ inputs.target }}
