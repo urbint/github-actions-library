@@ -44,7 +44,7 @@ runs:
 
     - name: Login account name
       run: |
-        gcloud login
+        gcloud auth login
         gcloud auth list
       shell: bash
 
