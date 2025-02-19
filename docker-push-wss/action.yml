@@ -46,8 +46,6 @@ runs:
       run: |
         gcloud login
         gcloud auth list
-      with: 
-        credentials_json: ${{ inputs.gcr_sa_key }}
       shell: bash
 
     - name: Build and Push Docker Image (No Target)
