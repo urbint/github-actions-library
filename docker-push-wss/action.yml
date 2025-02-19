@@ -41,6 +41,10 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
 
+    - name: Login account name
+      run: |
+        gcloud config list account --format "value(core.account)"
+      shell: bash
 
     - name: Build and Push Docker Image (No Target)
       if: ${{ !inputs.target }}
