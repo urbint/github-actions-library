@@ -44,7 +44,7 @@ runs:
 
     - name: Login account name
       run: |
-        gcloud auth activate-service-account --key=${GOOGLE_APPLICATION_CREDENTIALS}
+        gcloud auth application-default login
         gcloud auth list
       shell: bash
 
