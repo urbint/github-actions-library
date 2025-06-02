@@ -26,12 +26,15 @@ runs:
 
     - name: Install the project
       run: uv sync --locked --all-extras --dev
+      shell: bash
 
     - name: Run Ruff format
       run: uv run ruff format --check .
+      shell: bash
 
     - name: Sort imports
       run: uv run ruff check --select I --diff .
+      shell: bash
 
     - name: Run mypy
       run: uv run mypy .
