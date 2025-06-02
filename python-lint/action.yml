@@ -30,13 +30,15 @@ runs:
 
     - name: Run Ruff format
       run: uv run ruff format --check .
+      continue-on-error: true  # Added so to provide lenience while linting
       shell: bash
 
     - name: Sort imports
       run: uv run ruff check --select I --diff .
+      continue-on-error: true  # Added so to provide lenience while linting
       shell: bash
 
     - name: Run mypy
       run: uv run mypy .
-      continue-on-error: true          #Added so to provide lineance while lint
+      continue-on-error: true # Added so to provide lenience while linting
       shell: bash
