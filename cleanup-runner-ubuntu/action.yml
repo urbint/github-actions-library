@@ -1,0 +1,44 @@
+name: 'Free Disk Space (Ubuntu)'
+description: 'Free disk space on the Ubuntu runner with configurable cleanup options'
+inputs:
+  tool-cache:
+    description: 'Remove tool cache (might remove tools that are actually needed, but frees about 6 GB)'
+    required: false
+    default: 'false'
+  android:
+    description: 'Remove Android tools and cache'
+    required: false
+    default: 'true'
+  dotnet:
+    description: 'Remove .NET tools and cache'
+    required: false
+    default: 'true'
+  haskell:
+    description: 'Remove Haskell tools and cache'
+    required: false
+    default: 'true'
+  large-packages:
+    description: 'Remove large packages'
+    required: false
+    default: 'true'
+  docker-images:
+    description: 'Remove Docker images'
+    required: false
+    default: 'true'
+  swap-storage:
+    description: 'Remove swap storage'
+    required: false
+    default: 'false'
+runs:
+  using: 'composite'
+  steps:
+    - name: Free Disk Space (Ubuntu)
+      uses: jlumbroso/free-disk-space@main
+      with:
+        tool-cache: ${{ inputs.tool-cache }}
+        android: ${{ inputs.android }}
+        dotnet: ${{ inputs.dotnet }}
+        haskell: ${{ inputs.haskell }}
+        large-packages: ${{ inputs.large-packages }}
+        docker-images: ${{ inputs.docker-images }}
+        swap-storage: ${{ inputs.swap-storage }}
