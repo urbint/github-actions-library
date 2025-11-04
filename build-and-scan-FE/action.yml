@@ -78,13 +78,67 @@ runs:
         wget https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb
         sudo dpkg -i trivy_0.45.1_Linux-64bit.deb
 
+    # Set a custom TMPDIR to prevent "no space left on device" error
+    - name: Set TMPDIR to a larger location
+      run: |
+        mkdir -p /home/runner/tmp
+        export TMPDIR=/home/runner/tmp
+        echo "TMPDIR set to /home/runner/tmp"
+      shell: bash
+
     - name: Update Trivy DB
+      env:
+        TMPDIR: /home/runner/tmp
       shell: bash  # Specify the shell for this step
       run: |
         trivy db update || echo "Failed to update DB, using cached version."
 
+    - name: Clean up Docker to Free Space
+      shell: bash  # Specify the shell for this step
+      run: |
+        echo "=== Docker Disk Usage Before Cleanup ==="
+        docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Cleaning up Docker to free space ==="
+        # Remove all build cache (safest, doesn't affect images)
+        docker builder prune -a -f || echo "Docker builder prune failed"
+        # Remove dangling images (images without tags)
+        docker image prune -f || echo "Docker image prune failed"
+        # Remove unused containers
+        docker container prune -f || echo "Docker container prune failed"
+        # Remove unused volumes
+        docker volume prune -f || echo "Docker volume prune failed"
+        echo ""
+        echo "=== Docker Disk Usage After Cleanup ==="
+        docker system df || echo "Docker system df failed"
+
+    - name: Check Disk Usage Before Scan
+      env:
+        TMPDIR: /home/runner/tmp
+      shell: bash  # Specify the shell for this step
+      run: |
+        echo "=== Disk Usage Overview ==="
+        df -h
+        echo ""
+        echo "=== TMPDIR Location Disk Usage ==="
+        df -h /home/runner/tmp || df -h /home/runner
+        echo ""
+        echo "=== Current TMPDIR Value ==="
+        echo "TMPDIR=${TMPDIR:-/tmp}"
+        echo ""
+        echo "=== Space in /home/runner/tmp ==="
+        du -sh /home/runner/tmp 2>/dev/null || echo "Directory not found or empty"
+        echo ""
+        echo "=== Docker Disk Usage ==="
+        docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Top Disk Consumers ==="
+        du -h /home/runner 2>/dev/null | sort -rh | head -10 || echo "Could not check /home/runner"
+
     - name: Trivy Scan
       id: trivy
+      env:
+        TMPDIR: /home/runner/tmp
       shell: bash  # Specify the shell for this step
       run: |
         trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}

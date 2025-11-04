@@ -60,6 +60,8 @@ runs:
 
     # Handle retry logic for DB download due to rate-limiting
     - name: Update Trivy DB
+      env:
+        TMPDIR: /home/runner/tmp
       run: |
         MAX_RETRIES=10
         RETRY_COUNT=0
@@ -82,9 +84,53 @@ runs:
         fi
       shell: bash
 
+    - name: Clean up Docker to Free Space
+      run: |
+        echo "=== Docker Disk Usage Before Cleanup ==="
+        docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Cleaning up Docker to free space ==="
+        # Remove all build cache (safest, doesn't affect images)
+        docker builder prune -a -f || echo "Docker builder prune failed"
+        # Remove dangling images (images without tags)
+        docker image prune -f || echo "Docker image prune failed"
+        # Remove unused containers
+        docker container prune -f || echo "Docker container prune failed"
+        # Remove unused volumes
+        docker volume prune -f || echo "Docker volume prune failed"
+        echo ""
+        echo "=== Docker Disk Usage After Cleanup ==="
+        docker system df || echo "Docker system df failed"
+      shell: bash
+
+    - name: Check Disk Usage Before Scan
+      env:
+        TMPDIR: /home/runner/tmp
+      run: |
+        echo "=== Disk Usage Overview ==="
+        df -h
+        echo ""
+        echo "=== TMPDIR Location Disk Usage ==="
+        df -h /home/runner/tmp || df -h /home/runner
+        echo ""
+        echo "=== Current TMPDIR Value ==="
+        echo "TMPDIR=${TMPDIR:-/tmp}"
+        echo ""
+        echo "=== Space in /home/runner/tmp ==="
+        du -sh /home/runner/tmp 2>/dev/null || echo "Directory not found or empty"
+        echo ""
+        echo "=== Docker Disk Usage ==="
+        docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Top Disk Consumers ==="
+        du -h /home/runner 2>/dev/null | sort -rh | head -10 || echo "Could not check /home/runner"
+      shell: bash
+
     # Run the Trivy image scan with severity filter
     - name: Run Trivy Scan
       id: trivy
+      env:
+        TMPDIR: /home/runner/tmp
       run: |
         trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}
       continue-on-error: true  # Continue even if vulnerabilities are found
