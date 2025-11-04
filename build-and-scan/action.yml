@@ -60,6 +60,8 @@ runs:
 
     # Handle retry logic for DB download due to rate-limiting
     - name: Update Trivy DB
+      env:
+        TMPDIR: /home/runner/tmp
       run: |
         MAX_RETRIES=10
         RETRY_COUNT=0
@@ -85,6 +87,8 @@ runs:
     # Run the Trivy image scan with severity filter
     - name: Run Trivy Scan
       id: trivy
+      env:
+        TMPDIR: /home/runner/tmp
       run: |
         trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}
       continue-on-error: true  # Continue even if vulnerabilities are found
