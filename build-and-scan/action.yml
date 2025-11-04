@@ -84,6 +84,27 @@ runs:
         fi
       shell: bash
 
+    - name: Check Disk Usage Before Scan
+      run: |
+        echo "=== Disk Usage Overview ==="
+        df -h
+        echo ""
+        echo "=== TMPDIR Location Disk Usage ==="
+        df -h /home/runner/tmp || df -h /home/runner
+        echo ""
+        echo "=== Current TMPDIR Value ==="
+        echo "TMPDIR=${TMPDIR:-/tmp}"
+        echo ""
+        echo "=== Space in /home/runner/tmp ==="
+        du -sh /home/runner/tmp 2>/dev/null || echo "Directory not found or empty"
+        echo ""
+        echo "=== Docker Disk Usage ==="
+        docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Top Disk Consumers ==="
+        du -h /home/runner 2>/dev/null | sort -rh | head -10 || echo "Could not check /home/runner"
+      shell: bash
+
     # Run the Trivy image scan with severity filter
     - name: Run Trivy Scan
       id: trivy
