@@ -93,24 +93,67 @@ runs:
       run: |
         trivy db update || echo "Failed to update DB, using cached version."
 
-    - name: Clean up Docker to Free Space
+    - name: Clean up Docker and Disk Space Before Scan
       shell: bash  # Specify the shell for this step
       run: |
-        echo "=== Docker Disk Usage Before Cleanup ==="
+        echo "=== Disk Usage Before Cleanup ==="
+        df -h
         docker system df || echo "Docker system df failed"
         echo ""
         echo "=== Cleaning up Docker to free space ==="
         # Remove all build cache (safest, doesn't affect images)
         docker builder prune -a -f || echo "Docker builder prune failed"
-        # Remove dangling images (images without tags)
-        docker image prune -f || echo "Docker image prune failed"
+        # Remove all unused images (more aggressive)
+        docker image prune -a -f || echo "Docker image prune failed"
         # Remove unused containers
         docker container prune -f || echo "Docker container prune failed"
         # Remove unused volumes
         docker volume prune -f || echo "Docker volume prune failed"
+        # Remove unused networks
+        docker network prune -f || echo "Docker network prune failed"
+        # Full system prune
+        docker system prune -af --volumes || echo "Docker system prune failed"
         echo ""
-        echo "=== Docker Disk Usage After Cleanup ==="
+        echo "=== Cleaning up Yarn and npm caches ==="
+        rm -rf ~/.cache/yarn || true
+        npm cache clean --force || true
+        rm -rf ~/.npm/_cacache || true
+        echo ""
+        echo "=== Cleaning up workspace build artifacts ==="
+        # Remove node_modules and .next from workspace (Docker build already completed)
+        if [ -d "${{ github.workspace }}/node_modules" ]; then
+          echo "Removing node_modules from workspace"
+          rm -rf ${{ github.workspace }}/node_modules || true
+        fi
+        if [ -d "${{ github.workspace }}/.next" ]; then
+          echo "Removing .next from workspace"
+          rm -rf ${{ github.workspace }}/.next || true
+        fi
+        # Remove test files and other unnecessary files
+        find ${{ github.workspace }} -type d -name "__tests__" -exec rm -rf {} + 2>/dev/null || true
+        find ${{ github.workspace }} -type d -name "__mocks__" -exec rm -rf {} + 2>/dev/null || true
+        find ${{ github.workspace }} -type d -name "playwright" -exec rm -rf {} + 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.test.ts" -delete 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.test.tsx" -delete 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.map" -delete 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.log" -delete 2>/dev/null || true
+        echo ""
+        echo "=== Cleaning up temporary directories ==="
+        rm -rf /tmp/* /tmp/.* 2>/dev/null || true
+        rm -rf ~/tmp/* ~/tmp/.* 2>/dev/null || true
+        rm -rf /var/tmp/* 2>/dev/null || true
+        mkdir -p /home/runner/tmp
+        echo ""
+        echo "=== Cleaning up other caches ==="
+        rm -rf ~/.cache/pip ~/.cache/go-build ~/.cache/ruby ~/.cache/rust 2>/dev/null || true
+        rm -rf ~/.local/share/Trash 2>/dev/null || true
+        echo ""
+        echo "=== Disk Usage After Cleanup ==="
+        df -h
         docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Available space ==="
+        df -h / | tail -1 | awk '{print "Available: " $4}'
 
     - name: Check Disk Usage Before Scan
       env:
@@ -141,6 +184,67 @@ runs:
         TMPDIR: /home/runner/tmp
       shell: bash  # Specify the shell for this step
       run: |
+        echo "=== Cleaning up disk space before Trivy scan ==="
+        echo "=== Disk Usage Before Cleanup ==="
+        df -h
+        docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Cleaning up Docker to free space ==="
+        # Remove all build cache (safest, doesn't affect images)
+        docker builder prune -a -f || echo "Docker builder prune failed"
+        # Remove all unused images (more aggressive)
+        docker image prune -a -f || echo "Docker image prune failed"
+        # Remove unused containers
+        docker container prune -f || echo "Docker container prune failed"
+        # Remove unused volumes
+        docker volume prune -f || echo "Docker volume prune failed"
+        # Remove unused networks
+        docker network prune -f || echo "Docker network prune failed"
+        # Full system prune
+        docker system prune -af --volumes || echo "Docker system prune failed"
+        echo ""
+        echo "=== Cleaning up Yarn and npm caches ==="
+        rm -rf ~/.cache/yarn || true
+        npm cache clean --force || true
+        rm -rf ~/.npm/_cacache || true
+        echo ""
+        echo "=== Cleaning up workspace build artifacts ==="
+        # Remove node_modules and .next from workspace (Docker build already completed)
+        if [ -d "${{ github.workspace }}/node_modules" ]; then
+          echo "Removing node_modules from workspace"
+          rm -rf ${{ github.workspace }}/node_modules || true
+        fi
+        if [ -d "${{ github.workspace }}/.next" ]; then
+          echo "Removing .next from workspace"
+          rm -rf ${{ github.workspace }}/.next || true
+        fi
+        # Remove test files and other unnecessary files
+        find ${{ github.workspace }} -type d -name "__tests__" -exec rm -rf {} + 2>/dev/null || true
+        find ${{ github.workspace }} -type d -name "__mocks__" -exec rm -rf {} + 2>/dev/null || true
+        find ${{ github.workspace }} -type d -name "playwright" -exec rm -rf {} + 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.test.ts" -delete 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.test.tsx" -delete 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.map" -delete 2>/dev/null || true
+        find ${{ github.workspace }} -type f -name "*.log" -delete 2>/dev/null || true
+        echo ""
+        echo "=== Cleaning up temporary directories ==="
+        rm -rf /tmp/* /tmp/.* 2>/dev/null || true
+        rm -rf ~/tmp/* ~/tmp/.* 2>/dev/null || true
+        rm -rf /var/tmp/* 2>/dev/null || true
+        mkdir -p /home/runner/tmp
+        echo ""
+        echo "=== Cleaning up other caches ==="
+        rm -rf ~/.cache/pip ~/.cache/go-build ~/.cache/ruby ~/.cache/rust 2>/dev/null || true
+        rm -rf ~/.local/share/Trash 2>/dev/null || true
+        echo ""
+        echo "=== Disk Usage After Cleanup ==="
+        df -h
+        docker system df || echo "Docker system df failed"
+        echo ""
+        echo "=== Available space ==="
+        df -h / | tail -1 | awk '{print "Available: " $4}'
+        echo ""
+        echo "=== Running Trivy scan ==="
         trivy image --severity HIGH,CRITICAL ${{ inputs.image_name }}
       continue-on-error: true
 
