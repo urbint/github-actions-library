@@ -41,8 +41,12 @@ runs:
         output-env-credentials: true
 
     - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v2
+      run: |
+        aws ecr get-login-password --region ${{ inputs.aws_region }} \
+          | docker login \
+            --username AWS \
+            --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
+      shell: bash
 
     - name: Build and Push Docker Image (No Target)
       if: ${{ !inputs.target }}
