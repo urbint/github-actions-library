@@ -1,5 +1,5 @@
 name: 'Docker Push to ECR'
-description: 'Builds and pushes a Docker image to Amazon Elastic Container Registry using Workload Identity Federation'
+description: 'Builds and pushes a Docker image to Amazon Elastic Container Registry using Workload Identity Federation. Note: The workflow must have permissions: id-token: write and contents: read'
 inputs:
   tag:
     description: 'Tag for the Docker image (e.g., latest or commit SHA)'
