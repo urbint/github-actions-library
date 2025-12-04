@@ -35,6 +35,10 @@ runs:
       with:
         role-to-assume: ${{ inputs.iam_role_arn }}
         aws-region: ${{ inputs.aws_region }}
+        role-session-name: github-actions-ecr
+        # `audience` is optional; if you set it, make sure it matches trust policy
+        audience: sts.amazonaws.com
+        output-env-credentials: true
 
     - name: Login to Amazon ECR
       id: login-ecr
