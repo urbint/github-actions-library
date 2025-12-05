@@ -1,5 +1,5 @@
-name: 'Docker Push to ECR'
-description: 'Builds and pushes a Docker image to Amazon Elastic Container Registry using Workload Identity Federation. ⚠️ REQUIRED: The calling workflow MUST include permissions: id-token: write and contents: read at the job or workflow level. See README for details.'
+name: 'Docker Push Frontend to ECR'
+description: 'Builds a frontend application and pushes a Docker image to Amazon Elastic Container Registry using Workload Identity Federation. ⚠️ REQUIRED: The calling workflow MUST include permissions: id-token: write and contents: read at the job or workflow level.'
 inputs:
   tag:
     description: 'Tag for the Docker image (e.g., latest or commit SHA)'
@@ -20,6 +20,17 @@ inputs:
     description: 'Path to the Dockerfile (default: Dockerfile)'
     required: false
     default: 'Dockerfile'
+  node-version:
+    description: 'Node.js version to use'
+    required: true
+    default: '20'
+  registry-url:
+    description: 'Registry URL for NPM packages'
+    required: true
+  node-auth-token:
+    description: 'NPM Auth Token for accessing private packages'
+    required: true
+    default: ''
   target:
     description: 'Optional build target for the Docker image'
     required: false
@@ -46,6 +57,24 @@ runs:
           | docker login \
             --username AWS \
             --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
+      shell: bash
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+
+    - name: Install dependencies
+      run: |
+        yarn install
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      shell: bash
+
+    - name: Build the application
+      run: |
+        yarn build
       shell: bash
 
     - name: Build and Push Docker Image (No Target)

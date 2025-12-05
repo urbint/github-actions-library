@@ -12,13 +12,17 @@ This GitHub Action builds and pushes Docker images to Amazon Elastic Container R
 
 ## Required Workflow Permissions
 
-**Important**: Your workflow file must include the following permissions for OIDC authentication to work:
+**⚠️ CRITICAL**: Your workflow file **MUST** include the following permissions for OIDC authentication to work. **This is the #1 cause of authentication failures.**
+
+**The permissions must be set at the workflow or job level** - composite actions cannot set permissions themselves.
 
 ```yaml
 permissions:
-  id-token: write   # Required for OIDC authentication
+  id-token: write   # Required for OIDC authentication - WITHOUT THIS, AUTHENTICATION WILL FAIL
   contents: read    # Required for checkout
 ```
+
+**Common Error**: If you see `Error: Credentials could not be loaded, please check your action inputs: Could not load credentials from any providers`, it means your workflow is missing the `id-token: write` permission.
 
 Example workflow:
 
@@ -127,15 +131,45 @@ Attach a policy to the role with ECR push permissions:
 
 ## Troubleshooting
 
-### Error: "Could not load credentials from any providers"
+### Error: "Could not load credentials from any providers" or "Did you mean to set the `id-token` permission?"
 
-This error occurs when the workflow doesn't have the required `id-token: write` permission. Make sure your workflow file includes:
+**This is the most common error** and occurs when the workflow doesn't have the required `id-token: write` permission. 
 
+**Solution**: Add permissions to your workflow file at the **workflow level** (applies to all jobs) or **job level** (applies to specific job):
+
+**Option 1: At workflow level (recommended)**
 ```yaml
+name: Your Workflow
+on:
+  push:
+    branches: [main]
+
 permissions:
   id-token: write
   contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: urbint/github-actions-library/docker-push-ecr@main
+        # ... your inputs
 ```
+
+**Option 2: At job level**
+```yaml
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: urbint/github-actions-library/docker-push-ecr@main
+        # ... your inputs
+```
+
+**Note**: Composite actions cannot set permissions - they must be set in the calling workflow. This is a GitHub Actions limitation.
 
 ### Error: "Access Denied" when pushing to ECR
 
