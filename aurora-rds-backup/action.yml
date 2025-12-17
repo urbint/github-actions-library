@@ -1,0 +1,56 @@
+name: "Aurora RDS Backup"
+description: "Takes a backup (snapshot) of a specified Aurora RDS cluster based on the environment using Workload Identity Federation. ⚠️ REQUIRED: The calling workflow MUST include permissions: id-token: write and contents: read at the job or workflow level. See README for details."
+inputs:
+  environment:
+    description: "Environment (integ, staging, prod)"
+    required: true
+    type: string
+    options:
+      - integ
+      - staging
+      - prod
+  aurora_cluster_identifier:
+    description: "Identifier of the Aurora RDS cluster to backup"
+    required: true
+    type: string
+  rds_backup_description:
+    description: "Description of the RDS backup snapshot"
+    required: true
+    type: string
+  iam_role_arn:
+    description: "IAM Role ARN for Workload Identity Federation (e.g., arn:aws:iam::123456789012:role/github-actions-role)"
+    required: true
+    type: string
+  aws_region:
+    description: "AWS Region (e.g., us-east-1)"
+    required: true
+    type: string
+runs:
+  using: "composite"
+  steps:
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.iam_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+        role-session-name: github-actions-rds-backup
+        # `audience` is optional; if you set it, make sure it matches trust policy
+        audience: sts.amazonaws.com
+        output-env-credentials: true
+
+    - name: Set up AWS CLI
+      shell: bash
+      run: |
+        aws --version
+
+    - name: Take Aurora RDS Backup
+      shell: bash
+      run: |
+        echo "Creating snapshot for Aurora RDS cluster: ${{ inputs.aurora_cluster_identifier }} in environment: ${{ inputs.environment }}"
+        SNAPSHOT_ID="${{ inputs.aurora_cluster_identifier }}-snapshot-$(date +%Y%m%d-%H%M%S)"
+        aws rds create-db-cluster-snapshot \
+          --db-cluster-identifier ${{ inputs.aurora_cluster_identifier }} \
+          --db-cluster-snapshot-identifier "$SNAPSHOT_ID" \
+          --region ${{ inputs.aws_region }} \
+          --tags Key=Environment,Value=${{ inputs.environment }} Key=Description,Value="${{ inputs.rds_backup_description }}"
+        echo "Snapshot created with ID: $SNAPSHOT_ID"
