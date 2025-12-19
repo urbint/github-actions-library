@@ -2,7 +2,7 @@
 
 ---
 
-This GitHub Action automates the process of taking backups (snapshots) of a specified AWS Aurora RDS cluster across different environments using Workload Identity Federation (WIF) for authentication.
+This GitHub Action automates the process of taking backups (snapshots) of a specified AWS RDS cluster or instance across different environments using Workload Identity Federation (WIF) for authentication. The action automatically detects whether the identifier refers to a cluster or instance and creates the appropriate snapshot.
 
 ---
 
@@ -11,7 +11,7 @@ This GitHub Action automates the process of taking backups (snapshots) of a spec
 1. **AWS OIDC Provider**: Configure an OIDC identity provider in AWS IAM for GitHub Actions
 2. **IAM Role**: Create an IAM role with:
    - Trust policy allowing GitHub Actions to assume the role
-   - Permissions to create RDS cluster snapshots (e.g., `rds:CreateDBClusterSnapshot`, `rds:AddTagsToResource`)
+   - Permissions to create RDS cluster and instance snapshots (e.g., `rds:CreateDBClusterSnapshot`, `rds:CreateDBSnapshot`, `rds:AddTagsToResource`, `rds:DescribeDBClusters`, `rds:DescribeDBInstances`)
 
 ## Required Workflow Permissions
 
@@ -35,8 +35,8 @@ permissions:
     * **Options:** `integ`, `staging`, `prod`
     * **Description:** This input helps categorize and manage backups based on the environment.
 
-* **`aurora_cluster_identifier`** (Required)
-    * **Description:** The identifier of the Aurora RDS cluster you want to create a backup for (e.g., `my-aurora-cluster`).
+* **`rds_identifier`** (Required)
+    * **Description:** The identifier of the RDS cluster or instance you want to create a backup for (e.g., `my-aurora-cluster` or `my-rds-instance`). The action will automatically detect whether it's a cluster or instance.
 
 * **`rds_backup_description`** (Required)
     * **Description:** This helps identify the backup later (e.g., `Daily backup before deployment`).
@@ -45,7 +45,7 @@ permissions:
     * **Description:** IAM Role ARN for Workload Identity Federation (e.g., `arn:aws:iam::123456789012:role/github-actions-role`).
 
 * **`aws_region`** (Required)
-    * **Description:** AWS Region where the Aurora RDS cluster is located (e.g., `us-east-1`).
+    * **Description:** AWS Region where the RDS cluster or instance is located (e.g., `us-east-1`).
 
 ---
 
@@ -55,7 +55,11 @@ This action performs the following steps:
 
 1.  **Authentication**: Authenticates with AWS using OIDC (Workload Identity Federation) by assuming the specified IAM role.
 2.  **AWS CLI Setup**: Verifies the AWS CLI is available.
-3.  **Snapshot Creation**: Executes the `aws rds create-db-cluster-snapshot` command to initiate a snapshot of the specified Aurora RDS cluster. The snapshot ID is automatically generated with a timestamp, and tags are added for environment and description tracking.
+3.  **Resource Detection**: Automatically detects whether the identifier refers to an RDS cluster or instance by attempting to describe each type.
+4.  **Snapshot Creation**: Creates the appropriate snapshot type:
+    - For clusters: Executes `aws rds create-db-cluster-snapshot`
+    - For instances: Executes `aws rds create-db-snapshot`
+    The snapshot ID is automatically generated with a timestamp, and tags are added for environment and description tracking.
 
 ---
 
@@ -75,8 +79,8 @@ on:
           - integ
           - staging
           - prod
-      aurora_cluster_identifier:
-        description: 'Identifier of the Aurora RDS cluster to backup'
+      rds_identifier:
+        description: 'Identifier of the RDS cluster or instance to backup'
         required: true
         type: string
       rds_backup_description:
@@ -96,7 +100,7 @@ jobs:
         uses: './.github/actions/aurora-rds-backup' # Path to your action
         with:
           environment: ${{ github.event.inputs.environment }}
-          aurora_cluster_identifier: ${{ github.event.inputs.aurora_cluster_identifier }}
+          rds_identifier: ${{ github.event.inputs.rds_identifier }}
           rds_backup_description: ${{ github.event.inputs.rds_backup_description }}
           iam_role_arn: 'arn:aws:iam::123456789012:role/github-actions-rds-backup-role'
           aws_region: 'us-east-1'
@@ -148,7 +152,7 @@ Replace:
 
 ### 3. Attach RDS Permissions
 
-Attach a policy to the role with RDS snapshot permissions:
+Attach a policy to the role with RDS snapshot permissions for both clusters and instances:
 
 ```json
 {
@@ -158,12 +162,18 @@ Attach a policy to the role with RDS snapshot permissions:
       "Effect": "Allow",
       "Action": [
         "rds:CreateDBClusterSnapshot",
+        "rds:CreateDBSnapshot",
         "rds:AddTagsToResource",
-        "rds:DescribeDBClusterSnapshots"
+        "rds:DescribeDBClusterSnapshots",
+        "rds:DescribeDBSnapshots",
+        "rds:DescribeDBClusters",
+        "rds:DescribeDBInstances"
       ],
       "Resource": [
         "arn:aws:rds:*:ACCOUNT_ID:cluster-snapshot:*",
-        "arn:aws:rds:*:ACCOUNT_ID:cluster:CLUSTER_IDENTIFIER"
+        "arn:aws:rds:*:ACCOUNT_ID:snapshot:*",
+        "arn:aws:rds:*:ACCOUNT_ID:cluster:*",
+        "arn:aws:rds:*:ACCOUNT_ID:db:*"
       ]
     }
   ]
@@ -172,8 +182,13 @@ Attach a policy to the role with RDS snapshot permissions:
 
 Replace:
 - `ACCOUNT_ID` with your AWS account ID
-- `CLUSTER_IDENTIFIER` with your Aurora cluster identifier, or use `*` for all clusters
+- Use `*` for all clusters/instances, or specify specific identifiers
 
 ## Setup Notes
-* **IAM Permissions**: The IAM role must have the `rds:CreateDBClusterSnapshot`, `rds:AddTagsToResource`, and `rds:DescribeDBClusterSnapshots` permissions.
+* **IAM Permissions**: The IAM role must have the following permissions:
+  - `rds:CreateDBClusterSnapshot` - for cluster snapshots
+  - `rds:CreateDBSnapshot` - for instance snapshots
+  - `rds:AddTagsToResource` - for tagging snapshots
+  - `rds:DescribeDBClusters` - to detect clusters
+  - `rds:DescribeDBInstances` - to detect instances
 * **Action Path**: If this action is located within your repository, update the uses path accordingly (e.g., `./.github/actions/aurora-rds-backup`).

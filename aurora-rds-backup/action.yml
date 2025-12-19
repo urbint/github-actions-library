@@ -1,5 +1,5 @@
 name: "Aurora RDS Backup"
-description: "Takes a backup (snapshot) of a specified Aurora RDS cluster based on the environment using Workload Identity Federation. ⚠️ REQUIRED: The calling workflow MUST include permissions: id-token: write and contents: read at the job or workflow level. See README for details."
+description: "Takes a backup (snapshot) of a specified RDS cluster or instance based on the environment using Workload Identity Federation. ⚠️ REQUIRED: The calling workflow MUST include permissions: id-token: write and contents: read at the job or workflow level. See README for details."
 inputs:
   environment:
     description: "Environment (integ, staging, prod)"
@@ -9,8 +9,8 @@ inputs:
       - integ
       - staging
       - prod
-  aurora_cluster_identifier:
-    description: "Identifier of the Aurora RDS cluster to backup"
+  rds_identifier:
+    description: "Identifier of the RDS cluster or instance to backup"
     required: true
     type: string
   rds_backup_description:
@@ -43,14 +43,37 @@ runs:
       run: |
         aws --version
 
-    - name: Take Aurora RDS Backup
+    - name: Take RDS Backup
       shell: bash
       run: |
-        echo "Creating snapshot for Aurora RDS cluster: ${{ inputs.aurora_cluster_identifier }} in environment: ${{ inputs.environment }}"
-        SNAPSHOT_ID="${{ inputs.aurora_cluster_identifier }}-snapshot-$(date +%Y%m%d-%H%M%S)"
-        aws rds create-db-cluster-snapshot \
-          --db-cluster-identifier ${{ inputs.aurora_cluster_identifier }} \
-          --db-cluster-snapshot-identifier "$SNAPSHOT_ID" \
-          --region ${{ inputs.aws_region }} \
-          --tags Key=Environment,Value=${{ inputs.environment }} Key=Description,Value="${{ inputs.rds_backup_description }}"
-        echo "Snapshot created with ID: $SNAPSHOT_ID"
+        RDS_IDENTIFIER="${{ inputs.rds_identifier }}"
+        AWS_REGION="${{ inputs.aws_region }}"
+        
+        echo "Checking if $RDS_IDENTIFIER is a cluster or instance..."
+        
+        # Try cluster first
+        if aws rds describe-db-clusters --db-cluster-identifier "$RDS_IDENTIFIER" --region "$AWS_REGION" 2>/dev/null; then
+          echo "Found RDS cluster: $RDS_IDENTIFIER"
+          SNAPSHOT_ID="${RDS_IDENTIFIER}-snapshot-$(date +%Y%m%d-%H%M%S)"
+          aws rds create-db-cluster-snapshot \
+            --db-cluster-identifier "$RDS_IDENTIFIER" \
+            --db-cluster-snapshot-identifier "$SNAPSHOT_ID" \
+            --region "$AWS_REGION" \
+            --tags Key=Environment,Value=${{ inputs.environment }} Key=Description,Value="${{ inputs.rds_backup_description }}"
+          echo "Created cluster snapshot: $SNAPSHOT_ID"
+        # Try instance
+        elif aws rds describe-db-instances --db-instance-identifier "$RDS_IDENTIFIER" --region "$AWS_REGION" 2>/dev/null; then
+          echo "Found RDS instance: $RDS_IDENTIFIER"
+          SNAPSHOT_ID="${RDS_IDENTIFIER}-snapshot-$(date +%Y%m%d-%H%M%S)"
+          aws rds create-db-snapshot \
+            --db-instance-identifier "$RDS_IDENTIFIER" \
+            --db-snapshot-identifier "$SNAPSHOT_ID" \
+            --region "$AWS_REGION" \
+            --tags Key=Environment,Value=${{ inputs.environment }} Key=Description,Value="${{ inputs.rds_backup_description }}"
+          echo "Created instance snapshot: $SNAPSHOT_ID"
+        else
+          echo "Error: RDS cluster or instance '$RDS_IDENTIFIER' not found"
+          exit 1
+        fi
+
+    
