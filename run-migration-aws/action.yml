@@ -1,0 +1,75 @@
+name: 'Run Migrations (AWS)'
+description: 'Runs migrations using a Docker image from ECR, with AWS auth via IAM role OIDC. ⚠️ REQUIRED: The calling workflow MUST include permissions: id-token: write and contents: read at the job or workflow level.'
+inputs:
+  aws_account_id:
+    description: 'AWS Account ID'
+    required: true
+  aws_region:
+    description: 'AWS Region (e.g., us-east-1)'
+    required: true
+  iam_role_arn:
+    description: 'IAM Role ARN for OIDC (e.g., arn:aws:iam::123456789012:role/github-actions-role)'
+    required: true
+  postgres_host:
+    description: 'PostgreSQL host'
+    required: true
+  postgres_user:
+    description: 'PostgreSQL user'
+    required: true
+  postgres_password:
+    description: 'PostgreSQL password'
+    required: true
+  postgres_db:
+    description: 'PostgreSQL database'
+    required: true
+  migration_image_name:
+    description: 'Migration Docker image name (ECR repository name)'
+    required: true
+  migration_image_tag:
+    description: 'Migration Docker image tag'
+    required: true
+  s3_bucket_name:
+    description: 'Optional S3 bucket name (passed as S3_BUCKET_NAME env to container)'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      id: aws-auth
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.iam_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+        role-session-name: github-actions-migration
+        audience: sts.amazonaws.com
+        output-env-credentials: true
+
+    - name: Login to Amazon ECR
+      run: |
+        aws ecr get-login-password --region ${{ inputs.aws_region }} \
+          | docker login \
+            --username AWS \
+            --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
+      shell: bash
+
+    - name: Run Migration Docker
+      run: |
+        ECR_REGISTRY="${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com"
+        IMAGE="$ECR_REGISTRY/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}"
+        docker run --rm \
+          -e POSTGRES_HOST=${{ inputs.postgres_host }} \
+          -e POSTGRES_USER=${{ inputs.postgres_user }} \
+          -e POSTGRES_PASSWORD=${{ inputs.postgres_password }} \
+          -e POSTGRES_DB=${{ inputs.postgres_db }} \
+          -e AWS_REGION=${{ inputs.aws_region }} \
+          -e S3_BUCKET_NAME=${{ inputs.s3_bucket_name }} \
+          -e AWS_ACCESS_KEY_ID \
+          -e AWS_SECRET_ACCESS_KEY \
+          -e AWS_SESSION_TOKEN \
+          --entrypoint /bin/bash \
+          "$IMAGE" -c "alembic upgrade head"
+      shell: bash
