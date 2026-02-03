@@ -38,6 +38,27 @@ runs:
     - name: Checkout code
       uses: actions/checkout@v4
 
+    - name: Set up Docker
+      run: |
+        if docker info &>/dev/null; then
+          echo "DOCKER_CMD=docker" >> "$GITHUB_ENV"
+          echo "Docker is already available."
+          docker --version
+          exit 0
+        fi
+        if [ "$RUNNER_OS" != "Linux" ]; then
+          echo "Docker is not running and this runner is not Linux. Use a runner with Docker (e.g. ubuntu-latest) or install/start Docker before calling this action."
+          exit 1
+        fi
+        echo "Installing Docker..."
+        curl -fsSL https://get.docker.com | sh
+        sudo systemctl start docker 2>/dev/null || sudo service docker start 2>/dev/null || true
+        sudo docker info
+        echo "DOCKER_CMD=sudo docker" >> "$GITHUB_ENV"
+      shell: bash
+      env:
+        RUNNER_OS: ${{ runner.os }}
+
     - name: Configure AWS credentials
       id: aws-auth
       uses: aws-actions/configure-aws-credentials@v4
@@ -79,7 +100,7 @@ runs:
     - name: Login to Amazon ECR
       run: |
         aws ecr get-login-password --region ${{ inputs.aws_region }} \
-          | docker login \
+          | $DOCKER_CMD login \
             --username AWS \
             --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
       shell: bash
@@ -88,7 +109,7 @@ runs:
       run: |
         ECR_REGISTRY="${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com"
         IMAGE="$ECR_REGISTRY/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}"
-        docker run --rm \
+        $DOCKER_CMD run --rm \
           -e POSTGRES_HOST=${{ inputs.postgres_host }} \
           -e POSTGRES_USER=${{ inputs.postgres_user }} \
           -e POSTGRES_PASSWORD=${{ inputs.postgres_password }} \
