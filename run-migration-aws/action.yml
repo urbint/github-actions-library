@@ -40,21 +40,45 @@ runs:
 
     - name: Set up Docker
       run: |
-        if docker info &>/dev/null; then
-          echo "DOCKER_CMD=docker" >> "$GITHUB_ENV"
-          echo "Docker is already available."
-          docker --version
+        set_docker_cmd() {
+          echo "DOCKER_CMD=$1" >> "$GITHUB_ENV"
+          echo "Docker is available ($1)."
+          $1 --version
           exit 0
+        }
+        if docker info &>/dev/null; then
+          set_docker_cmd "docker"
+        fi
+        if sudo docker info &>/dev/null; then
+          set_docker_cmd "sudo docker"
         fi
         if [ "$RUNNER_OS" != "Linux" ]; then
-          echo "Docker is not running and this runner is not Linux. Use a runner with Docker (e.g. ubuntu-latest) or install/start Docker before calling this action."
+          echo "Docker daemon is not reachable and this runner is not Linux. Use runs-on: ubuntu-latest or a runner with Docker daemon running."
           exit 1
         fi
+        # Docker client may exist but daemon not running — try to start the service (do not reinstall)
+        if command -v docker &>/dev/null || command -v dockerd &>/dev/null; then
+          echo "Docker client found but daemon not running. Starting Docker service..."
+          sudo systemctl start docker 2>/dev/null || sudo service docker start 2>/dev/null || true
+          for i in 1 2 3 4 5 6 7 8 9 10; do
+            sleep 2
+            if sudo docker info &>/dev/null; then
+              set_docker_cmd "sudo docker"
+            fi
+          done
+        fi
+        # Docker not installed — install and start
         echo "Installing Docker..."
         curl -fsSL https://get.docker.com | sh
         sudo systemctl start docker 2>/dev/null || sudo service docker start 2>/dev/null || true
-        sudo docker info
-        echo "DOCKER_CMD=sudo docker" >> "$GITHUB_ENV"
+        for i in 1 2 3 4 5 6 7 8 9 10; do
+          sleep 2
+          if sudo docker info &>/dev/null; then
+            set_docker_cmd "sudo docker"
+          fi
+        done
+        echo "Could not connect to Docker daemon. Use runs-on: ubuntu-latest or a runner where the Docker daemon can run (e.g. not inside a container without Docker-in-Docker)."
+        exit 1
       shell: bash
       env:
         RUNNER_OS: ${{ runner.os }}
