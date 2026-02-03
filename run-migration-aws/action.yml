@@ -48,6 +48,34 @@ runs:
         audience: sts.amazonaws.com
         output-env-credentials: true
 
+    - name: Set up AWS CLI
+      run: |
+        if command -v aws &>/dev/null; then
+          aws --version
+          exit 0
+        fi
+        case "$RUNNER_OS" in
+          Linux)
+            curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o awscliv2.zip
+            unzip -q awscliv2.zip
+            sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
+            rm -rf awscliv2.zip aws
+            ;;
+          macOS)
+            curl -sS "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o AWSCLIV2.pkg
+            sudo installer -pkg AWSCLIV2.pkg -target /
+            rm AWSCLIV2.pkg
+            ;;
+          *)
+            echo "Unsupported runner OS: $RUNNER_OS. Install AWS CLI in a prior step or use a Linux/macOS runner."
+            exit 1
+            ;;
+        esac
+        aws --version
+      shell: bash
+      env:
+        RUNNER_OS: ${{ runner.os }}
+
     - name: Login to Amazon ECR
       run: |
         aws ecr get-login-password --region ${{ inputs.aws_region }} \
