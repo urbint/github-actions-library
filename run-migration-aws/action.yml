@@ -37,7 +37,7 @@ runs:
   steps:
     - name: Checkout code
       uses: actions/checkout@v4
-      
+
     - name: Configure AWS credentials
       id: aws-auth
       uses: aws-actions/configure-aws-credentials@v4
@@ -78,8 +78,13 @@ runs:
 
     - name: Login to Amazon ECR
       run: |
+        # Use a writable Docker config dir (runner may be unprivileged or in a container)
+        DOCKER_CONFIG_DIR="${RUNNER_TEMP:-/tmp}/.docker-ecr"
+        mkdir -p "$DOCKER_CONFIG_DIR"
+        export DOCKER_CONFIG="$DOCKER_CONFIG_DIR"
+        echo "DOCKER_CONFIG=$DOCKER_CONFIG_DIR" >> "$GITHUB_ENV"
         aws ecr get-login-password --region ${{ inputs.aws_region }} \
-          | $DOCKER_CMD login \
+          | docker login \
             --username AWS \
             --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
       shell: bash
@@ -88,7 +93,7 @@ runs:
       run: |
         ECR_REGISTRY="${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com"
         IMAGE="$ECR_REGISTRY/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}"
-        $DOCKER_CMD run --rm \
+        docker run --rm \
           -e POSTGRES_HOST=${{ inputs.postgres_host }} \
           -e POSTGRES_USER=${{ inputs.postgres_user }} \
           -e POSTGRES_PASSWORD=${{ inputs.postgres_password }} \
