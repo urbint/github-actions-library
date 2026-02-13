@@ -1,0 +1,106 @@
+name: 'Run Migrations (CWF - AWS)'
+description: 'Runs CWF migrations using a Docker image from ECR, with AWS auth via IAM role OIDC. ⚠️ REQUIRED: The calling workflow MUST include permissions: id-token: write and contents: read at the job or workflow level.'
+inputs:
+  aws_account_id:
+    description: 'AWS Account ID'
+    required: true
+  aws_region:
+    description: 'AWS Region (e.g., us-east-1)'
+    required: true
+  iam_role_arn:
+    description: 'IAM Role ARN for OIDC (e.g., arn:aws:iam::123456789012:role/github-actions-role)'
+    required: true
+  mongodb_host:
+    description: 'MongoDB host'
+    required: true
+  mongodb_user:
+    description: 'MongoDB user'
+    required: true
+  mongodb_password:
+    description: 'MongoDB password'
+    required: true
+  mongodb_db:
+    description: 'MongoDB database'
+    required: true
+  migration_image_name:
+    description: 'Migration Docker image name (ECR repository name)'
+    required: true
+  migration_image_tag:
+    description: 'Migration Docker image tag'
+    required: true
+  app_env:
+    description: 'APP_ENV value (e.g. integration, staging, prod)'
+    required: false
+    default: 'integration'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      id: aws-auth
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.iam_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+        role-session-name: github-actions-migration-cwf
+        audience: sts.amazonaws.com
+        output-env-credentials: true
+
+    - name: Set up AWS CLI
+      run: |
+        if command -v aws &>/dev/null; then
+          aws --version
+          exit 0
+        fi
+        case "$RUNNER_OS" in
+          Linux)
+            curl -sS "https://awscli.amazonaws.com/awscli-exe-linux-$(uname -m).zip" -o awscliv2.zip
+            unzip -q awscliv2.zip
+            sudo ./aws/install -i /usr/local/aws-cli -b /usr/local/bin
+            rm -rf awscliv2.zip aws
+            ;;
+          macOS)
+            curl -sS "https://awscli.amazonaws.com/AWSCLIV2.pkg" -o AWSCLIV2.pkg
+            sudo installer -pkg AWSCLIV2.pkg -target /
+            rm AWSCLIV2.pkg
+            ;;
+          *)
+            echo "Unsupported runner OS: $RUNNER_OS. Install AWS CLI in a prior step or use a Linux/macOS runner."
+            exit 1
+            ;;
+        esac
+        aws --version
+      shell: bash
+      env:
+        RUNNER_OS: ${{ runner.os }}
+
+    - name: Login to Amazon ECR
+      run: |
+        # Use a writable Docker config dir (runner may be unprivileged or in a container)
+        DOCKER_CONFIG_DIR="${RUNNER_TEMP:-/tmp}/.docker-ecr"
+        mkdir -p "$DOCKER_CONFIG_DIR"
+        export DOCKER_CONFIG="$DOCKER_CONFIG_DIR"
+        echo "DOCKER_CONFIG=$DOCKER_CONFIG_DIR" >> "$GITHUB_ENV"
+        aws ecr get-login-password --region ${{ inputs.aws_region }} \
+          | docker login \
+            --username AWS \
+            --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
+      shell: bash
+
+    - name: Run Migration Docker
+      run: |
+        ECR_REGISTRY="${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com"
+        IMAGE="$ECR_REGISTRY/${{ inputs.migration_image_name }}:${{ inputs.migration_image_tag }}"
+        docker run --rm \
+          -e MONGO_HOST=${{ inputs.mongodb_host }} \
+          -e MONGO_USER=${{ inputs.mongodb_user }} \
+          -e MONGO_PASSWORD=${{ inputs.mongodb_password }} \
+          -e MONGO_DB=${{ inputs.mongodb_db }} \
+          -e MONGO_PROTOCOL="mongodb+srv" \
+          -e APP_ENV="${{ inputs.app_env }}" \
+          --network=host \
+          "$IMAGE" python /app/scripts/migrate.py migrate
+      shell: bash
