@@ -102,5 +102,5 @@ runs:
           -e MONGO_PROTOCOL="mongodb+srv" \
           -e APP_ENV="${{ inputs.app_env }}" \
           --network=host \
-          "$IMAGE" python /app/scripts/migrate.py migrate
+          837207188996.dkr.ecr.eu-west-2.amazonaws.com/staging/ws-customizable-workflows:{{inputs.migration_image_tag}} python /app/scripts/migrate.py migrate
       shell: bash
