@@ -46,5 +46,5 @@ runs:
 
     - name: Run Test
       run: poetry run pytest
-      continue-on-error: true
+      continue-on-error: false
       shell: bash
