@@ -1,0 +1,6 @@
+name: Install Trivy
+      shell: bash  # Specify the shell for this step
+      run: |
+        sudo apt-get update && sudo apt-get install wget -y
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.69.2/trivy_0.69.2_Linux-64bit.deb
+        sudo dpkg -i trivy_0.69.2_Linux-64bit.deb
