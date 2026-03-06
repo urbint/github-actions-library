@@ -45,10 +45,11 @@ runs:
           trivy-db-
 
     - name: Install Trivy
+      shell: bash  # Specify the shell for this step
       run: |
-        curl -sfL https://github.com/aquasecurity/trivy/releases/download/v0.45.1/trivy_0.45.1_Linux-64bit.deb -o trivy.deb
-        sudo dpkg -i trivy.deb
-      shell: bash
+        sudo apt-get update && sudo apt-get install wget -y
+        wget https://github.com/aquasecurity/trivy/releases/download/v0.69.2/trivy_0.69.2_Linux-64bit.deb
+        sudo dpkg -i trivy_0.69.2_Linux-64bit.deb
 
     # Set a custom TMPDIR to prevent "no space left on device" error
     - name: Set TMPDIR to a larger location
