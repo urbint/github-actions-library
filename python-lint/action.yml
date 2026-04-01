@@ -43,20 +43,20 @@ runs:
 
     - name: Run Black
       run: poetry run black --check .
-      continue-on-error: true          #Added so to provide lineance while lint 
+      continue-on-error: false          #Added so to provide lineance while lint 
       shell: bash
 
     - name: Run Flake8
       run: poetry run flake8 .
-      continue-on-error: true          #Added so to provide lineance while lint
+      continue-on-error: false          #Added so to provide lineance while lint
       shell: bash
 
     - name: Run isort
       run: poetry run isort --check .
-      continue-on-error: true           #Added so to provide lineance while lint
+      continue-on-error: false           #Added so to provide lineance while lint
       shell: bash
 
     - name: Run mypy
       run: poetry run mypy .
-      continue-on-error: true          #Added so to provide lineance while lint
+      continue-on-error: false          #Added so to provide lineance while lint
       shell: bash
