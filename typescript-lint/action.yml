@@ -33,6 +33,6 @@ inputs:
     required: true
     default: 'https://npm.pkg.github.com'  
 
-  node-auth-token:
-    description: 'NPM Auth Token for accessing private packages'
-    required: true  
+  # node-auth-token:
+  #   description: 'NPM Auth Token for accessing private packages'
+  #   required: true  
