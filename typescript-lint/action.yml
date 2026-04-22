@@ -10,6 +10,23 @@ runs:
         node-version: ${{ inputs.node-version }}
         registry-url: ${{ inputs.registry-url }}  
 
+    - name: 'Configure npm auth for GitHub Packages'
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: |
+        cat > .npmrc <<EOF
+        @urbint:registry=https://npm.pkg.github.com/
+        //npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}
+        always-auth=true
+        EOF
+    - name: 'Configure git to use App token (for git+https deps)'
+      shell: bash
+      env:
+        TOKEN: ${{ inputs.node-auth-token }}
+      run: |
+        git config --global url."https://x-access-token:${TOKEN}@github.com/".insteadOf "https://github.com/"
+
     - name: Install dependencies
       run: |
         yarn install
@@ -33,6 +50,6 @@ inputs:
     required: true
     default: 'https://npm.pkg.github.com'  
 
-  # node-auth-token:
-  #   description: 'NPM Auth Token for accessing private packages'
-  #   required: true  
+  node-auth-token:
+    description: 'NPM Auth Token for accessing private packages'
+    required: true  
