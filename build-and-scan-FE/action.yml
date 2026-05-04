@@ -35,7 +35,9 @@ runs:
       with:
         node-version: ${{ inputs.node-version }}
         registry-url: ${{ inputs.registry-url }}  # Pass the registry URL
-
+        always-auth: true
+     env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
     - name: Install dependencies
       run: |
         yarn install
