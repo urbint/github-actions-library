@@ -1,0 +1,62 @@
+name: Build Docker Image
+
+description: Build a Docker image for a frontend application.
+
+inputs:
+  image_name:
+    description: 'The name and tag of the Docker image (e.g., my-image:latest).'
+    required: true
+  dockerfile:
+    description: 'Path to the Dockerfile.'
+    required: true
+    default: 'Dockerfile'
+  context:
+    description: 'Build context path.'
+    required: true
+    default: '.'  # Default to current directory
+  node-version:
+    description: 'Node.js version to use'
+    required: true
+    default: '20'  # Default Node.js version
+  registry-url:
+    description: 'Registry URL for NPM packages'
+    required: true
+    default: 'https://npm.pkg.github.com'  # Default registry URL
+  node-auth-token:
+    description: 'NPM Auth Token for accessing private packages'
+    required: true
+    default: ''  # Default can be blank
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}  # Pass the registry URL
+
+    - name: Install dependencies
+      run: |
+        yarn install
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}  # Use the provided auth token
+      shell: bash  # Specify the shell for this step
+
+    - name: Build the application
+      run: |
+        yarn build  # Add the build step
+      shell: bash  # Specify the shell for this step
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v2
+
+    - name: Build Docker image
+      id: build
+      shell: bash  # Specify the shell for this step
+      run: |
+        docker build -t ${{ inputs.image_name }} -f ${{ inputs.dockerfile }} ${{ inputs.context }}
+
+    - name: List Docker Images
+      shell: bash  # Specify the shell for this step
+      run: docker images
