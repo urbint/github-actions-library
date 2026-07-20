@@ -28,6 +28,10 @@ inputs:
     required: true
     default: 'my-frontend-image'
 
+outputs:
+  digest:
+    description: 'sha256 digest of the pushed image'
+    value: ${{ steps.build.outputs.digest }}
 
 runs:
   using: 'composite'
@@ -68,6 +72,7 @@ runs:
       shell: bash  
 
     - name: Build and Push Docker Image
+      id: build
       uses: docker/build-push-action@v5
       with:
         context: .

@@ -55,40 +55,36 @@ runs:
     # Step 2: Update the image tag in the kustomization.yaml file
     - name: Update image tag
       shell: bash
+      env:
+        FILE_PATH: ${{ inputs.file_path }}
+        IMAGE_NAME: ${{ inputs.image_name }}
+        TAG_KEY: ${{ inputs.tag_key }}
+        TAG: ${{ inputs.tag }}
+        BRANCH: ${{ inputs.branch }}
       run: |
-        pwd
-        ls -la
-  
         cd gitops # Navigate to the cloned directory
-        git checkout "${{ inputs.branch }}"
-        ls -la
-        
-        # Print the current contents of the kustomization.yaml file before updating
+        git checkout "$BRANCH"
+
         echo "=== Before Update ==="
-        cat "${{ inputs.file_path }}"
+        cat "$FILE_PATH"
 
-        # Use yq to update the image tag
-        yq eval '(.images[] | select(.name == "${{ inputs.image_name }}")).newTag = "${{ inputs.tag }}"' -i "${{ inputs.file_path }}"
-
-
-
-        # Print the contents of the kustomization.yaml file after the update
-        echo "=== After Update ==="
-        cat "${{ inputs.file_path }}"
-
-        # Check if there are changes to commit
-        git diff "${{ inputs.file_path }}"
-
-        # Optionally, check if the file is marked as changed (useful for debugging)
-        if ! git diff --quiet; then
-          echo "File has changes. You can proceed with commit and push."
+        # When pinning by immutable digest, write the .digest field and remove any
+        # mutable .newTag so kustomize renders name@sha256:...; otherwise fall back
+        # to the historical .newTag behavior (backward-compatible for other callers).
+        if [ "$TAG_KEY" = "digest" ]; then
+          yq eval '(.images[] | select(.name == strenv(IMAGE_NAME))) |= (.digest = strenv(TAG) | del(.newTag))' -i "$FILE_PATH"
         else
-          echo "No changes detected in the file."
+          yq eval '(.images[] | select(.name == strenv(IMAGE_NAME))).newTag = strenv(TAG)' -i "$FILE_PATH"
         fi
+
+        echo "=== After Update ==="
+        cat "$FILE_PATH"
 
         # Commit and push the changes if there were any
         if ! git diff --quiet; then
-          git add "${{ inputs.file_path }}"
-          git commit -m "Update image tag for ${{ inputs.image_name }} to ${{ inputs.tag }}"
-          git push origin "${{ inputs.branch }}"
+          git add "$FILE_PATH"
+          git commit -m "Update $IMAGE_NAME to $TAG"
+          git push origin "$BRANCH"
+        else
+          echo "No changes detected in the file."
         fi
