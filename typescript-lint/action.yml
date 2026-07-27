@@ -1,38 +1,82 @@
 name: Node.js Lint
-description: Lint a Node.js application.
+description: Lint a Node.js application (supports yarn or bun).
 author: Prakhar
-runs:
-  using: 'composite'
-  steps:
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
-      with:
-        node-version: ${{ inputs.node-version }}
-        registry-url: ${{ inputs.registry-url }}  
-
-    - name: Install dependencies
-      run: |
-        yarn install
-      env:
-        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
-      shell: bash
-
-    - name: Run Lint
-      run: |
-        yarn lint
-      shell: bash
-
 inputs:
   node-version:
     description: 'Node.js version to use'
     required: true
     default: '20'
-  
   registry-url:
     description: 'Registry URL for npm packages'
     required: true
-    default: 'https://npm.pkg.github.com'  
-
+    default: 'https://npm.pkg.github.com'
   node-auth-token:
     description: 'NPM Auth Token for accessing private packages'
-    required: true  
+    required: true
+  package-manager:
+    description: 'Package manager to use: yarn or bun'
+    required: false
+    default: 'yarn'
+  bun-version:
+    description: 'Bun version when package-manager is bun'
+    required: false
+    default: '1.3.14'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Write .npmrc for GitHub Packages
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: |
+        echo "@urbint:registry=https://npm.pkg.github.com/" > .npmrc
+        echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+        echo "always-auth=true" >> .npmrc
+        echo "NPM_CONFIG_USERCONFIG=" >> "$GITHUB_ENV"
+
+    - name: Set up Node.js (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+        registry-url: ${{ inputs.registry-url }}
+
+    - name: Set up Node.js (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Set up Bun
+      if: ${{ inputs.package-manager == 'bun' }}
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+
+    - name: Install dependencies (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: yarn install
+
+    - name: Run Lint (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      shell: bash
+      run: yarn lint
+
+    - name: Install dependencies (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: bun install --frozen-lockfile
+
+    - name: Run Lint (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: bun run lint

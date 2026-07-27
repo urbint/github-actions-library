@@ -34,6 +34,14 @@ inputs:
   target:
     description: 'Optional build target for the Docker image'
     required: false
+  package-manager:
+    description: 'Package manager to use: yarn or bun'
+    required: false
+    default: 'yarn'
+  bun-version:
+    description: 'Bun version when package-manager is bun'
+    required: false
+    default: '1.3.14'
 
 runs:
   using: 'composite'
@@ -59,23 +67,61 @@ runs:
             --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
       shell: bash
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Write .npmrc for GitHub Packages
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: |
+        echo "@urbint:registry=https://npm.pkg.github.com/" > .npmrc
+        echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+        echo "always-auth=true" >> .npmrc
+        echo "NPM_CONFIG_USERCONFIG=" >> "$GITHUB_ENV"
+
+    - name: Set up Node.js (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
         registry-url: ${{ inputs.registry-url }}
 
-    - name: Install dependencies
-      run: |
-        yarn install
+    - name: Set up Node.js (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - name: Set up Bun
+      if: ${{ inputs.package-manager == 'bun' }}
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+
+    - name: Install dependencies (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      shell: bash
       env:
         NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
-      shell: bash
+      run: yarn install
 
-    - name: Build the application
-      run: |
-        yarn build
+    - name: Build the application (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
       shell: bash
+      run: yarn build
+
+    - name: Install dependencies (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: bun install --frozen-lockfile
+
+    - name: Build the application (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: bun run build
 
     - name: Build and Push Docker Image (No Target)
       if: ${{ !inputs.target }}
