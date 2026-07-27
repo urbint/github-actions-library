@@ -1,5 +1,5 @@
 name: 'Docker Push to GCR'
-description: 'Builds and pushes a Docker image to Google Container Registry'
+description: 'Builds and pushes a Docker image to Google Container Registry (supports yarn or bun)'
 inputs:
   tag:
     description: 'Tag for the Docker image (e.g., latest or commit SHA)'
@@ -14,20 +14,26 @@ inputs:
   node-version:
     description: 'Node.js version to use'
     required: true
-    default: '20' 
+    default: '20'
   registry-url:
     description: 'Registry URL for NPM packages'
     required: true
   node-auth-token:
     description: 'NPM Auth Token for accessing private packages'
     required: true
-    default: '' 
-  
+    default: ''
   image_name:
     description: 'Name of the Docker image (default: my-frontend-image)'
     required: true
     default: 'my-frontend-image'
-
+  package-manager:
+    description: 'Package manager to use: yarn or bun'
+    required: false
+    default: 'yarn'
+  bun-version:
+    description: 'Bun version when package-manager is bun'
+    required: false
+    default: '1.3.14'
 
 runs:
   using: 'composite'
@@ -40,7 +46,7 @@ runs:
       uses: google-github-actions/auth@v1
       with:
         credentials_json: ${{ inputs.gcr_sa_key }}
-        token_format: "access_token"  
+        token_format: "access_token"
 
     - name: Log into Google Container Registry
       uses: docker/login-action@v2
@@ -49,28 +55,66 @@ runs:
         username: oauth2accesstoken
         password: ${{ steps.auth.outputs.access_token }}
 
-    - name: Set up Node.js
-      uses: actions/setup-node@v3
+    - name: Write .npmrc for GitHub Packages
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: |
+        echo "@urbint:registry=https://npm.pkg.github.com/" > .npmrc
+        echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}" >> .npmrc
+        echo "always-auth=true" >> .npmrc
+        echo "NPM_CONFIG_USERCONFIG=" >> "$GITHUB_ENV"
+
+    - name: Set up Node.js (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      uses: actions/setup-node@v4
       with:
         node-version: ${{ inputs.node-version }}
         registry-url: ${{ inputs.registry-url }}
 
-    - name: Install dependencies
-      run: |
-        yarn install
-      env:
-        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}  
-      shell: bash  
+    - name: Set up Node.js (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
 
-    - name: Build the application
-      run: |
-        yarn build  # Add the build step
-      shell: bash  
+    - name: Set up Bun
+      if: ${{ inputs.package-manager == 'bun' }}
+      uses: oven-sh/setup-bun@v2
+      with:
+        bun-version: ${{ inputs.bun-version }}
+
+    - name: Install dependencies (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: yarn install
+
+    - name: Build the application (yarn)
+      if: ${{ inputs.package-manager == 'yarn' }}
+      shell: bash
+      run: yarn build
+
+    - name: Install dependencies (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: bun install --frozen-lockfile
+
+    - name: Build the application (bun)
+      if: ${{ inputs.package-manager == 'bun' }}
+      shell: bash
+      env:
+        NODE_AUTH_TOKEN: ${{ inputs.node-auth-token }}
+      run: bun run build
 
     - name: Build and Push Docker Image
       uses: docker/build-push-action@v5
       with:
         context: .
-        file: ${{ inputs.dockerfile }}  
+        file: ${{ inputs.dockerfile }}
         push: true
-        tags: gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }} 
+        tags: gcr.io/urbint-1259/${{ inputs.image_name }}:${{ inputs.tag }}
