@@ -1,0 +1,86 @@
+name: 'Terraform apply'
+description: >
+  Init and apply for one env/region pair. Supports auto-approve with a var-file
+  (integ/stage) or applying a previously saved plan file (prod). All paths are
+  inputs — no account, role, or backend values are hardcoded.
+
+inputs:
+  working_directory:
+    description: 'Directory containing the Terraform root module.'
+    required: false
+    default: '.'
+  backend_config:
+    description: 'Path to backend config HCL (relative to working_directory).'
+    required: true
+  var_file:
+    description: 'Path to tfvars (required unless plan_file is set for apply-only).'
+    required: false
+    default: ''
+  plan_file:
+    description: 'If set, apply this saved plan instead of -auto-approve -var-file.'
+    required: false
+    default: ''
+  run_plan_first:
+    description: 'When true and plan_file empty, run plan -out=tfplan then apply it.'
+    required: false
+    default: 'false'
+  upload_plan_artifact:
+    description: 'Upload plan.txt when run_plan_first is true.'
+    required: false
+    default: 'false'
+  artifact_name:
+    description: 'Artifact name when uploading plan output.'
+    required: false
+    default: 'tfplan'
+  artifact_retention_days:
+    description: 'Days to retain the plan artifact.'
+    required: false
+    default: '14'
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Terraform init
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: terraform init -input=false -backend-config=${{ inputs.backend_config }}
+
+    - name: Terraform plan
+      if: inputs.run_plan_first == 'true' && inputs.plan_file == ''
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        if [ -z "${{ inputs.var_file }}" ]; then
+          echo "var_file is required when run_plan_first=true"
+          exit 1
+        fi
+        terraform plan -input=false -no-color -var-file=${{ inputs.var_file }} -out=tfplan | tee plan.txt
+
+    - name: Upload plan output
+      if: inputs.run_plan_first == 'true' && inputs.upload_plan_artifact == 'true'
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.artifact_name }}
+        path: ${{ inputs.working_directory }}/plan.txt
+        retention-days: ${{ inputs.artifact_retention_days }}
+
+    - name: Terraform apply saved plan
+      if: inputs.plan_file != '' || inputs.run_plan_first == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      env:
+        PLAN_FILE: ${{ inputs.plan_file }}
+      run: |
+        plan="${PLAN_FILE:-tfplan}"
+        terraform apply -input=false "${plan}"
+
+    - name: Terraform apply (auto-approve)
+      if: inputs.plan_file == '' && inputs.run_plan_first != 'true'
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        if [ -z "${{ inputs.var_file }}" ]; then
+          echo "var_file is required for auto-approve apply"
+          exit 1
+        fi
+        terraform apply -input=false -auto-approve -var-file=${{ inputs.var_file }}

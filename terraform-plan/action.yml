@@ -1,0 +1,115 @@
+name: 'Terraform plan'
+description: >
+  Run fmt, init, validate, and plan for one env/region pair. Detects planned
+  destroys, uploads artifacts, and exposes outputs for PR comments / gates.
+  Paths and versions are inputs only — safe for a public actions library.
+
+inputs:
+  working_directory:
+    description: 'Directory containing the Terraform root module.'
+    required: false
+    default: '.'
+  backend_config:
+    description: 'Path to backend config HCL (relative to working_directory).'
+    required: true
+  var_file:
+    description: 'Path to tfvars file (relative to working_directory).'
+    required: true
+  env:
+    description: 'Logical environment name (e.g. integ, stage, prod).'
+    required: true
+  region:
+    description: 'Deploy region (used in artifact naming).'
+    required: true
+  run_fmt_check:
+    description: 'Run terraform fmt -check -recursive before init.'
+    required: false
+    default: 'true'
+  artifact_retention_days:
+    description: 'Days to retain the plan artifact.'
+    required: false
+    default: '14'
+  upload_artifact:
+    description: 'Upload tfplan / plan.txt / plan.json / destroys.txt.'
+    required: false
+    default: 'true'
+
+outputs:
+  exit_code:
+    description: 'terraform plan exit code.'
+    value: ${{ steps.plan.outputs.exit_code }}
+  destroy_count:
+    description: 'Number of unique resources planned for delete/replace.'
+    value: ${{ steps.destroys.outputs.count }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Terraform fmt check
+      if: inputs.run_fmt_check == 'true'
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: terraform fmt -check -recursive
+
+    - name: Terraform init
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: terraform init -input=false -backend-config=${{ inputs.backend_config }}
+
+    - name: Terraform validate
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: terraform validate
+
+    - name: Terraform plan
+      id: plan
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        set +e
+        terraform plan -input=false -no-color -var-file=${{ inputs.var_file }} -out=tfplan \
+          > plan.txt 2>&1
+        exit_code=$?
+        set -e
+        echo "exit_code=${exit_code}" >> "${GITHUB_OUTPUT}"
+        if [ "${exit_code}" -ne 0 ]; then
+          cat plan.txt
+          exit "${exit_code}"
+        fi
+        cat plan.txt
+
+    - name: Detect resource destroys
+      id: destroys
+      if: steps.plan.outputs.exit_code == '0'
+      shell: bash
+      working-directory: ${{ inputs.working_directory }}
+      run: |
+        terraform show -json tfplan > plan.json
+        jq -r '
+          [.resource_changes[]?
+           | select(.change.actions | index("delete"))
+           | .address]
+          | unique
+          | .[]
+        ' plan.json > destroys.txt
+        count="$(wc -l < destroys.txt | tr -d ' ')"
+        echo "count=${count}" >> "${GITHUB_OUTPUT}"
+        if [ "${count}" -gt 0 ]; then
+          echo "Detected ${count} resource(s) planned for destroy (includes replace):"
+          cat destroys.txt
+        else
+          echo "No destroys detected."
+        fi
+
+    - name: Upload plan artifact
+      if: always() && inputs.upload_artifact == 'true' && steps.plan.outcome != 'skipped'
+      uses: actions/upload-artifact@v4
+      with:
+        name: tfplan-${{ inputs.env }}-${{ inputs.region }}
+        path: |
+          ${{ inputs.working_directory }}/tfplan
+          ${{ inputs.working_directory }}/plan.txt
+          ${{ inputs.working_directory }}/plan.json
+          ${{ inputs.working_directory }}/destroys.txt
+        if-no-files-found: ignore
+        retention-days: ${{ inputs.artifact_retention_days }}
