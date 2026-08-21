@@ -1,0 +1,99 @@
+name: 'Docker Push Worker Safety Service to GCR and ECR'
+description: >
+  Builds a single Docker stage once and pushes the same image to Google
+  Container Registry and Amazon ECR. Supports worker-safety-service's
+  multi-stage Dockerfile via an optional target input. Caller MUST checkout
+  the repo before invoking this action. Calling workflow MUST include
+  permissions: id-token: write (AWS OIDC), contents: read.
+inputs:
+  tag:
+    description: 'Tag for the Docker image (e.g., latest or commit SHA)'
+    required: true
+  image_name:
+    description: 'Image short name used for GCR (gcr.io/<gcr_project>/<image_name>)'
+    required: true
+  gcr_sa_key:
+    description: 'GCP Service Account JSON key for authentication'
+    required: true
+  gcr_project:
+    description: 'GCP project for GCR'
+    required: false
+    default: 'urbint-1259'
+  aws_account_id:
+    description: 'AWS Account ID'
+    required: true
+  aws_region:
+    description: 'AWS Region (e.g., eu-west-2)'
+    required: true
+  iam_role_arn:
+    description: 'IAM Role ARN for Workload Identity Federation'
+    required: true
+  ecr_repository:
+    description: 'ECR repository name (e.g., staging/worker-safety-service)'
+    required: true
+  dockerfile:
+    description: 'Path to the Dockerfile'
+    required: false
+    default: 'Dockerfile'
+  target:
+    description: 'Optional build target for the Docker image (e.g., runtime, uvicorn, migrations)'
+    required: false
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Authenticate to Google Cloud
+      id: auth
+      uses: google-github-actions/auth@v2
+      with:
+        credentials_json: ${{ inputs.gcr_sa_key }}
+        token_format: 'access_token'
+
+    - name: Log into Google Container Registry
+      uses: docker/login-action@v3
+      with:
+        registry: gcr.io
+        username: oauth2accesstoken
+        password: ${{ steps.auth.outputs.access_token }}
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.iam_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+        role-session-name: github-actions-ecr
+        audience: sts.amazonaws.com
+
+    - name: Login to Amazon ECR
+      shell: bash
+      run: |
+        aws ecr get-login-password --region ${{ inputs.aws_region }} \
+          | docker login \
+            --username AWS \
+            --password-stdin ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com
+
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Build and push to GCR and ECR (No Target)
+      if: ${{ !inputs.target }}
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ inputs.dockerfile }}
+        push: true
+        tags: |
+          gcr.io/${{ inputs.gcr_project }}/${{ inputs.image_name }}:${{ inputs.tag }}
+          ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com/${{ inputs.ecr_repository }}:${{ inputs.tag }}
+
+    - name: Build and push to GCR and ECR (With Target)
+      if: ${{ inputs.target }}
+      uses: docker/build-push-action@v5
+      with:
+        context: .
+        file: ${{ inputs.dockerfile }}
+        push: true
+        target: ${{ inputs.target }}
+        tags: |
+          gcr.io/${{ inputs.gcr_project }}/${{ inputs.image_name }}:${{ inputs.tag }}
+          ${{ inputs.aws_account_id }}.dkr.ecr.${{ inputs.aws_region }}.amazonaws.com/${{ inputs.ecr_repository }}:${{ inputs.tag }}
