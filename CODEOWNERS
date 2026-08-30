@@ -1,0 +1,4 @@
+# This file defines who has write access to this repository
+
+# Platform team has write access to all files
+* @urbint/platform
