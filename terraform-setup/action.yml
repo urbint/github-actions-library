@@ -1,0 +1,67 @@
+name: 'Terraform AWS setup'
+description: >
+  Mint a GitHub App token for private modules, assume an AWS OIDC role, and
+  install Terraform. Callers pass credentials/ARNs as inputs — nothing
+  environment-specific is hardcoded here.
+
+inputs:
+  github_app_id:
+    description: 'GitHub App ID (from caller vars/secrets).'
+    required: true
+  github_app_private_key:
+    description: 'GitHub App private key PEM (from caller secrets).'
+    required: true
+  installation_owner:
+    description: 'Org/user where the app is installed.'
+    required: false
+    default: 'urbint'
+  aws_role_arn:
+    description: 'IAM role ARN to assume via OIDC (from caller vars).'
+    required: true
+  aws_region:
+    description: 'AWS region for the OIDC credential helper (state/home region).'
+    required: true
+  terraform_version:
+    description: 'Terraform version to install.'
+    required: false
+    default: '1.12.0'
+  configure_git_for_private_modules:
+    description: 'Rewrite https://github.com/ to use the App token.'
+    required: false
+    default: 'true'
+
+outputs:
+  github_token:
+    description: 'GitHub App installation token.'
+    value: ${{ steps.github-app.outputs.token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Authenticate with GitHub App
+      id: github-app
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.github_app_id }}
+        private-key: ${{ inputs.github_app_private_key }}
+        owner: ${{ inputs.installation_owner }}
+
+    - name: Configure git for private modules
+      if: inputs.configure_git_for_private_modules == 'true'
+      shell: bash
+      env:
+        GH_TOKEN: ${{ steps.github-app.outputs.token }}
+      run: |
+        git config --global url."https://x-access-token:${GH_TOKEN}@github.com/".insteadOf "https://github.com/"
+
+    - name: Configure AWS credentials (OIDC)
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: ${{ inputs.aws_role_arn }}
+        aws-region: ${{ inputs.aws_region }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+      with:
+        terraform_version: ${{ inputs.terraform_version }}
+        terraform_wrapper: false

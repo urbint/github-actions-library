@@ -1,0 +1,42 @@
+name: 'Auth using GitHub App'
+description: 'Mint a GitHub App installation token for git and API access (e.g. org-wide app). Pass organization secrets from the calling workflow.'
+inputs:
+  github_app_id:
+    description: 'GitHub App ID (e.g. secrets.GITHUB_APP_ID from organization secrets).'
+    required: true
+  github_app_private_key:
+    description: 'GitHub App private key PEM (e.g. secrets.GITHUB_APP_PRIVATE_KEY from organization secrets).'
+    required: true
+  installation_owner:
+    description: 'Organization or user login where the app is installed. Defaults to the repository owner of the caller workflow.'
+    required: false
+    default: 'urbint'
+
+outputs:
+  token:
+    description: 'GitHub App installation access token.'
+    value: ${{ steps.app-token.outputs.token }}
+
+runs:
+  using: 'composite'
+  steps:
+    - name: 'Resolve GitHub App installation owner'
+      id: installation-owner
+      shell: bash
+      env:
+        INSTALLATION_OWNER: ${{ inputs.installation_owner }}
+        REPOSITORY_OWNER: ${{ github.repository_owner }}
+      run: |
+        if [ -n "$INSTALLATION_OWNER" ]; then
+          echo "owner=${INSTALLATION_OWNER}" >> "$GITHUB_OUTPUT"
+        else
+          echo "owner=${REPOSITORY_OWNER}" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: 'Generate GitHub App token'
+      id: app-token
+      uses: actions/create-github-app-token@v1
+      with:
+        app-id: ${{ inputs.github_app_id }}
+        private-key: ${{ inputs.github_app_private_key }}
+        owner: ${{ steps.installation-owner.outputs.owner }}
